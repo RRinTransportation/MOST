@@ -22,10 +22,33 @@
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
 
     /* Simple citation styling */
-    .cite-note { font-size: 0.95rem; opacity: 0.9; }
-    .how-to-cite { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.12); }
-    pre.bibtex { background: rgba(0,0,0,0.04); padding: 1rem; overflow-x: auto; font-size: 0.85rem; }
+    .cite-note { font-size: 1rem; line-height: 1.6; color: var(--text-dark); }
+    .how-to-cite { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-color); }
+    .citation-box {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.5rem;
+    }
+    pre.bibtex { background: #f8f9fa; padding: 1.25rem; border-radius: 6px; border: 1px solid var(--border-color); overflow-x: auto; font-size: 0.85rem; margin-top: 1rem; }
+    summary { font-weight: 600; color: var(--primary-color); cursor: pointer; margin-bottom: 0.5rem; }
+    summary:hover { text-decoration: underline; }
     sup a { text-decoration: none; }
+    .content-container { margin-top: 0; }
+    .team-member { padding: 1.25rem; }
+    .team-member h3 { font-size: 1.2rem; margin-bottom: 0.25rem; }
+    .team-member .affiliation { font-size: 0.85rem; margin-bottom: 0; }
+    .team-row-lead {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .team-row-lead .team-member {
+      flex: 0 1 280px;
+    }
   </style>
 
   <script src="site_libs/clipboard/clipboard.min.js"></script>
@@ -114,47 +137,139 @@
   </script>
 
 
+  <header class="hero">
+    <div class="container">
+      <h1>Measuring Open Science in Transportation (MOST)</h1>
+      <p class="subtitle">What is the state of open science in transportation research?</p>
+    </div>
+  </header>
+
   <div class="content-container">
-    <header>
-      <h1>Measuring the State of Open Science in Transportation (MOST)</h1>
-    </header>
-
     <main>
-      <h2>Welcome</h2>
-      <p>
-        This website hosts interactive pages for the Measuring Open Science Practices in Transportation Research project<sup>
-          <a href="#cite-most" aria-label="Citation for MOST working paper">[1]</a>
-        </sup>.
-      </p>
+      <section class="vision-box">
+        <h2>Welcome</h2>
+        <p>
+          This website hosts interactive pages for the <strong>Measuring Open Science in Transportation (MOST)</strong> project<sup>
+            <a href="#cite-most" aria-label="Citation for MOST working paper">[1]</a>
+          </sup>.
+        </p>
+        <p>
+          Our research utilizes Large Language Models (LLMs) to analyze and measure the adoption of open science practices across thousands of transportation research papers. This platform allows readers and reviewers to explore our findings and verify the data and code availability state in the field.
+        </p>
+      </section>
 
-      <h2>Available Pages</h2>
-      <ul>
-        <li><a href="explorer.html">Explorer</a> - An interactive page for check the paper with data or code avaiable.</li>
-      </ul>
+      <section style="margin-top: 3rem;">
+        <h2 class="section-title">Project Highlights</h2>
+        <div class="start-cards">
+          <div class="start-card">
+            <h3>10,000+ Papers</h3>
+            <p>Comprehensive analysis of transportation research articles from major journals from 2019-2024.</p>
+          </div>
+          <div class="start-card">
+            <h3>LLM-Enabled</h3>
+            <p>Leveraging Large Language Models to automatically detect and classify open science practices with validation.</p>
+          </div>
+          <div class="start-card">
+            <h3>Open Data & Code</h3>
+            <p>Exploring the evolution of data availability and code sharing trends in the transportation research community.</p>
+          </div>
+        </div>
+      </section>
+
+      <section style="margin-top: 4rem;">
+        <h2 class="section-title">Available Resources</h2>
+        <div class="start-cards">
+          <div class="start-card">
+            <h3>Data Explorer</h3>
+            <p>An interactive dashboard to explore papers with available data or code, filtered by various criteria.</p>
+            <a href="explorer.html" class="btn btn-outline">Open Explorer</a>
+          </div>
+        </div>
+      </section>
+
+      <section style="margin-top: 4rem;">
+        <h2 class="section-title">Project Team</h2>
+        
+        <div class="team-row-lead">
+          <div class="team-member">
+            <h3>Junyi Ji</h3>
+            <p class="affiliation">Vanderbilt University</p>
+          </div>
+          <div class="team-member">
+            <h3>Ruth Lu</h3>
+            <p class="affiliation">MIT</p>
+          </div>
+        </div>
+
+        <div class="team-grid">
+          <div class="team-member">
+            <h3>Linda Belkessa</h3>
+            <p class="affiliation">Polytechnique Montréal</p>
+          </div>
+          <div class="team-member">
+            <h3>Liming Wang</h3>
+            <p class="affiliation">Portland State University</p>
+          </div>
+          <div class="team-member">
+            <h3>Silvia Varotto</h3>
+            <p class="affiliation">TU Delft</p>
+          </div>
+          <div class="team-member">
+            <h3>Yongqi Dong</h3>
+            <p class="affiliation">MIT</p>
+          </div>
+          <div class="team-member">
+            <h3>Nicolas Saunier</h3>
+            <p class="affiliation">Polytechnique Montréal</p>
+          </div>
+          <div class="team-member">
+            <h3>Mostafa Ameli</h3>
+            <p class="affiliation">Gustave Eiffel University</p>
+          </div>
+          <div class="team-member">
+            <h3>Gregory S. Macfarlane</h3>
+            <p class="affiliation">Brigham Young University</p>
+          </div>
+          <div class="team-member">
+            <h3>Bahman Madadi</h3>
+            <p class="affiliation">TU Delft</p>
+          </div>
+          <div class="team-member">
+            <h3>Cathy Wu</h3>
+            <p class="affiliation">MIT</p>
+          </div>
+        </div>
+      </section>
 
       <!-- Citation section -->
       <section class="how-to-cite" aria-labelledby="how-to-cite-title">
         <h2 id="how-to-cite-title">How to cite</h2>
-        <p class="cite-note" id="cite-most">
-          [1] Ji, J., Lu, R., Belkessa, L., Wang, L., Varotto, S., Dong, Y., Saunier, N., Ameli, M., Macfarlane, G. S., Madadi, B., Wu, C. (2025).
-          <em>Measuring the State of Open Science in Transportation Using Large Language Models</em>. Working paper.
-        </p>
+        <div class="citation-box">
+          <p class="cite-note" id="cite-most">
+            [1] Ji, J., Lu, R., Belkessa, L., Wang, L., Varotto, S., Dong, Y., Saunier, N., Ameli, M., Macfarlane, G. S., Madadi, B., Wu, C. (2025).
+            <em>Measuring the State of Open Science in Transportation Using Large Language Models</em>. Working paper.
+          </p>
 
-        <details>
-          <summary>Show BibTeX</summary>
-          <pre class="bibtex"><code>@misc{RERITE2026MOST,
+          <details>
+            <summary>Show BibTeX</summary>
+            <pre class="bibtex"><code>@misc{RERITE2026MOST,
   title  = {Measuring the State of Open Science in Transportation Using Large Language Models},
   author = {Ji, Junyi and Lu, Ruth and Belkessa, Linda and Wang, Liming and Varotto, Silvia and Dong, Yongqi and Saunier, Nicolas and Ameli, Mostafa and Macfarlane, Gregory S. and Madadi, Bahman and Wu, Cathy},
   note   = {Working paper},
   year   = {2025}
 }</code></pre>
-        </details>
+          </details>
+        </div>
       </section>
     </main>
-
-    <footer>
-      <p>&copy; MOST Project 2024 - 2026</p>
-    </footer>
   </div>
+
+  <footer>
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2024 - 2026 <a href="https://rerite.org/MOST">MOST Project</a>. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
 </body>
 </html>
