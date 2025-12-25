@@ -41,76 +41,77 @@
 </head>
 
 <body>
-<nav class="navbar">
-  <div class="container">
-    <a class="navbar-brand" href="/index.html" aria-label="Home">
-      <img src="images/logo_png.png" alt="RERITE Logo" />
-    </a>
-    <button class="navbar-toggle" aria-label="Toggle navigation" aria-expanded="false">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-    <ul class="navbar-nav">
-      <li><a class="nav-link" href="../index.html">Home</a></li>
-      <li><a class="nav-link" href="../about.html">About</a></li>
-      <li><a class="nav-link" href="../team.html">Team</a></li>
-      <li><a class="nav-link" href="../activities.html">Activities</a></li>
-      <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" role="button" aria-haspopup="true" aria-expanded="false">Resources</a>
-        <div class="dropdown-menu" role="menu">
-          <div class="dropdown-container">
-            <p class="dropdown-section-label">Collections</p>
-            <a class="dropdown-item" href="../awesome-rerite.html">Initiative: awesome-rerite</a>
-            <a class="dropdown-item" href="../MOST">Initiative: MOST</a>
+
+  <nav class="navbar">
+    <div class="container">
+      <a class="navbar-brand" href="/index.html" aria-label="Home">
+        <img src="/images/logo_png.png" alt="RERITE Logo" />
+      </a>
+      <button class="navbar-toggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <ul class="navbar-nav">
+        <li><a class="nav-link" href="/index.html">Home</a></li>
+        <li><a class="nav-link" href="/about.html">About</a></li>
+        <li><a class="nav-link" href="/team.html">Team</a></li>
+        <li><a class="nav-link" href="/activities.html">Activities</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" aria-haspopup="true" aria-expanded="false">Resources</a>
+          <div class="dropdown-menu" role="menu">
+            <div class="dropdown-container">
+              <p class="dropdown-section-label">Collections</p>
+              <a class="dropdown-item" href="/awesome-rerite.html">Initiative: awesome-rerite</a>
+              <a class="dropdown-item" href="../MOST">Initiative: MOST</a>
+            </div>
           </div>
-        </div>
-      </li>
-      <li><a class="nav-link" href="../getinvolved.html">Contribute</a></li>
-    </ul>
-  </div>
-</nav>
+        </li>
+        <li><a class="nav-link" href="/getinvolved.html">Contribute</a></li>
+      </ul>
+    </div>
+  </nav>
 
-<script>
-  (function() {
-    const navbar = document.querySelector('.navbar');
-    const toggle = navbar?.querySelector('.navbar-toggle');
-    const navList = navbar?.querySelector('.navbar-nav');
+  <script>
+    (function() {
+      const navbar = document.querySelector('.navbar');
+      const toggle = navbar?.querySelector('.navbar-toggle');
+      const navList = navbar?.querySelector('.navbar-nav');
 
-    if (!navbar || !toggle || !navList) {
-      return;
-    }
-
-    const closeMenu = () => {
-      navbar.classList.remove('navbar--open');
-      toggle.setAttribute('aria-expanded', 'false');
-    };
-
-    toggle.addEventListener('click', (event) => {
-      event.stopPropagation();
-      const isOpen = navbar.classList.toggle('navbar--open');
-      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    });
-
-    document.addEventListener('click', (event) => {
-      if (!navbar.contains(event.target)) {
-        closeMenu();
+      if (!navbar || !toggle || !navList) {
+        return;
       }
-    });
 
-    navList.addEventListener('click', (event) => {
-      if (event.target.closest('a')) {
-        closeMenu();
-      }
-    });
+      const closeMenu = () => {
+        navbar.classList.remove('navbar--open');
+        toggle.setAttribute('aria-expanded', 'false');
+      };
 
-    window.addEventListener('resize', () => {
-      if (window.innerWidth > 768) {
-        closeMenu();
-      }
-    });
-  })();
-</script>
+      toggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isOpen = navbar.classList.toggle('navbar--open');
+        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!navbar.contains(event.target)) {
+          closeMenu();
+        }
+      });
+
+      navList.addEventListener('click', (event) => {
+        if (event.target.closest('a')) {
+          closeMenu();
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        if (window.innerWidth > 992) {
+          closeMenu();
+        }
+      });
+    })();
+  </script>
 
 
   <div class="content-container">
