@@ -406,7 +406,8 @@ html = f"""<!doctype html>
       pointer-events: auto; /* Re-enable clicks on content */
       max-height: 80vh;
       overflow-y: auto;
-      width: 500px;
+      width: 90%;
+      max-width: 500px;
     }}
     .close {{
       color: #aaa;
@@ -471,6 +472,26 @@ html = f"""<!doctype html>
         color: white;
         border-color: #2563eb;
     }}
+    @media (max-width: 1024px) {{
+      .wrap {{
+        flex-direction: column;
+        gap: 24px;
+        margin: 16px auto;
+        padding: 0 12px;
+      }}
+      .sidebar {{
+        flex: none;
+        width: 100%;
+        height: auto;
+        position: static;
+        overflow-y: visible;
+      }}
+      .main-content {{
+        height: 70vh;
+        min-height: 400px;
+        width: 100%;
+      }}
+    }}
   </style>
 </head>
 <body>
@@ -515,6 +536,10 @@ html = f"""<!doctype html>
           <label for="searchInput">Search abstract (beta)</label>
           <input type="text" id="searchInput" placeholder="e.g., calibration" />
         </div>
+        <div class="control">
+          <button id="btnRandomWalk" class="btn" style="width: 100%; justify-content: center; background-color: #059669; border: none; cursor: pointer;">🎲 Random Walk</button>
+          <div class="sub" style="margin-top: 4px; font-size: 12px;">Discover a random paper with open data or code.</div>
+        </div>
       </div>
       <div class="footer" style="flex-direction: column; margin-top: auto;">
         <div>
@@ -555,7 +580,7 @@ html = f"""<!doctype html>
           <div class="modal-content">
             <span class="close">&times;</span>
             <div class="modal-header">
-                <h2 id="modalTitle" style="margin:0; font-size: 1.25rem;">Paper Details</h2>
+                <h2 id="modalTitle" style="margin:0; font-size: 1.25rem;">🔬 Discovering Open Science...</h2>
             </div>
             <div id="modalBody" class="modal-body">
             </div>
@@ -636,10 +661,7 @@ html = f"""<!doctype html>
       }}
     }}
 
-    Plotly.newPlot("plot", traces, layout, config).then(gd => {{
-      gd.on("plotly_click", (ev) => {{
-        if (!ev || !ev.points || !ev.points.length) return;
-        const pt = ev.points[0];
+    function showDetails(pt) {{
         const cd = pt.customdata;
         // customdata: [doi_url, year, journal, code_disp, data_disp, title, abstract, inst, keywords]
         const doiUrl = cd && cd[0] ? cd[0] : "#";
@@ -647,7 +669,7 @@ html = f"""<!doctype html>
         const journal = cd && cd[2] ? cd[2] : "N/A";
         const codeDisp = cd && cd[3] ? cd[3] : "No code link";
         const dataDisp = cd && cd[4] ? cd[4] : "No data link";
-        const metaTitle = cd && cd[5] ? cd[5] : pt.text;
+        const metaTitle = cd && cd[5] ? cd[5] : (pt.text || "No Title");
         const metaAbstract = cd && cd[6] ? cd[6] : "No abstract available.";
         const metaInst = cd && cd[7] ? cd[7] : "Unknown Institution";
         const metaKeywords = cd && cd[8] ? cd[8] : "";
@@ -655,7 +677,7 @@ html = f"""<!doctype html>
         const metaAck = cd && cd[10] ? cd[10] : "";
         const metaOpenAccess = cd && cd[11] ? cd[11] : "False";
         
-        const topic = pt.data.meta ? pt.data.meta.topic : "Unknown";
+        const topic = (pt.data && pt.data.meta) ? pt.data.meta.topic : (pt.topic || "Unknown");
 
         const modalTitle = document.getElementById("modalTitle");
         const modalBody = document.getElementById("modalBody");
@@ -690,8 +712,35 @@ html = f"""<!doctype html>
         modalFooter.innerHTML = footerContent;
 
         modal.style.display = "flex";
+    }}
+
+    Plotly.newPlot("plot", traces, layout, config).then(gd => {{
+      gd.on("plotly_click", (ev) => {{
+        if (!ev || !ev.points || !ev.points.length) return;
+        showDetails(ev.points[0]);
       }});
     }});
+
+    function randomWalk() {{
+      const candidates = [];
+      traces.forEach(tr => {{
+        if (tr.meta && tr.meta.flag === true) {{
+          for (let i = 0; i < tr.x.length; i++) {{
+            candidates.push({{
+              customdata: tr.customdata[i],
+              text: tr.text[i],
+              topic: tr.meta.topic,
+              data: tr
+            }});
+          }}
+        }}
+      }});
+
+      if (candidates.length > 0) {{
+        const randomPt = candidates[Math.floor(Math.random() * candidates.length)];
+        showDetails(randomPt);
+      }}
+    }}
 
     function updateVisibility() {{
       const topic = document.getElementById("topicSelect").value;
@@ -788,6 +837,7 @@ html = f"""<!doctype html>
 
     document.getElementById("btnCodeView").addEventListener("click", () => setView("code"));
     document.getElementById("btnDataView").addEventListener("click", () => setView("data"));
+    document.getElementById("btnRandomWalk").addEventListener("click", randomWalk);
 
     document.getElementById("topicSelect").addEventListener("change", updateVisibility);
     document.getElementById("codeSelect").addEventListener("change", updateVisibility);
