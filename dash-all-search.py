@@ -8,7 +8,6 @@ df = pd.read_csv(csv_path)
 
 # Ensure booleans
 df['is_code_publicly_available'] = df['is_code_publicly_available'].astype(bool)
-pd.set_option('future.no_silent_downcasting', True)
 df['is_data_repository_available'] = df['is_data_repository_available'].fillna(False).infer_objects(copy=False).astype(bool)
 
 def parse_list_str(x):
@@ -75,7 +74,6 @@ df['meta_abstract'] = df['doi'].apply(lambda x: get_meta_field(x, 'abstract', ''
 df['meta_inst'] = df['doi'].apply(lambda x: get_meta_field(x, 'primary_institution', ''))
 df['meta_keywords'] = df['doi'].apply(lambda x: get_meta_field(x, 'keywords', ''))
 df['meta_funding'] = df['doi'].apply(lambda x: get_meta_field(x, 'funding_agencies', ''))
-df['meta_ack'] = df['doi'].apply(lambda x: get_meta_field(x, 'acknowledgement', ''))
 df['meta_open_access'] = df['doi'].apply(lambda x: get_meta_field(x, 'open_access', 'False'))
 
 # Topic column
@@ -129,7 +127,6 @@ def add_view_traces(view_name, flag_col, link_col, link_disp_idx):
             meta_inst = g['meta_inst'].tolist()
             meta_keywords = g['meta_keywords'].tolist()
             meta_funding = g['meta_funding'].tolist()
-            meta_ack = g['meta_ack'].tolist()
             meta_open_access = g['meta_open_access'].tolist()
             
             # Precompute display strings for both code and data
@@ -201,8 +198,8 @@ def add_view_traces(view_name, flag_col, link_col, link_disp_idx):
                 "x": x,
                 "y": y,
                 "text": meta_title,
-                # customdata: [doi_url, year, journal, code_disp, data_disp, title, abstract, inst, keywords, funding, ack, open_access]
-                "customdata": list(map(list, zip(doi_url, year, journal, code_disp_list, data_disp_list, meta_full_title, meta_abstract, meta_inst, meta_keywords, meta_funding, meta_ack, meta_open_access))),
+                # customdata: [doi_url, year, journal, code_disp, data_disp, title, abstract, inst, keywords, funding, open_access]
+                "customdata": list(map(list, zip(doi_url, year, journal, code_disp_list, data_disp_list, meta_full_title, meta_abstract, meta_inst, meta_keywords, meta_funding, meta_open_access))),
                 "hovertemplate": hovertemplate,
                 "hoverlabel": {"bgcolor": "#f3f4f6", "bordercolor": "#d1d5db", "font": {"color": "#111827"}} if flag else {},
                 "marker": marker,
@@ -472,6 +469,55 @@ html = f"""<!doctype html>
         color: white;
         border-color: #2563eb;
     }}
+    /* Citation Styling */
+    .citation-card {{
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+      position: relative;
+      transition: all 0.2s;
+    }}
+    .citation-card:hover {{
+      border-color: #cbd5e1;
+      background: #f3f4f6;
+    }}
+    .citation-header {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }}
+    .citation-label {{
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text);
+    }}
+    .copy-badge {{
+      cursor: pointer;
+      font-size: 10px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--muted);
+      transition: all 0.2s;
+    }}
+    .copy-badge:hover {{
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+    }}
+    .citation-card pre {{
+      margin: 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #475569;
+    }}
     @media (max-width: 1024px) {{
       .wrap {{
         flex-direction: column;
@@ -560,14 +606,20 @@ html = f"""<!doctype html>
           </div>
         </div>
 
-        <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--muted);">
-            <strong>Citation:</strong>
-            <pre style="white-space: pre-wrap; word-wrap: break-word; background: #f3f4f6; padding: 8px; border-radius: 4px; margin-top: 4px; font-family: monospace; font-size: 0.7rem;">@misc{{RERITE2026OTSM,
-  title  = {{Measuring the State of Open Science in Transportation Using Large Language Models}},
-  author = {{Ji, Junyi and Lu, Ruth and Belkessa, Linda and Wang, Liming and Varotto, Silvia and Dong, Yongqi and Saunier, Nicolas and Ameli, Mostafa and Macfarlane, Gregory S. and Madadi, Bahman and Wu, Cathy}},
-  note   = {{Working paper}},
-  year   = {{2025}}
-}}</pre>
+        <div class="citation-card">
+          <div class="citation-header">
+            <span class="citation-label">Cite this work</span>
+            <span class="copy-badge" id="copyBibBtn">Copy BibTeX</span>
+          </div>
+          <pre id="bibtexText">@article{{rerite2026most,
+  title={{Measuring the State of Open Science in Transportation Using Large Language Models}}, 
+  author={{Junyi Ji and Ruth Lu and Linda Belkessa and Liming Wang and Silvia Varotto and Yongqi Dong and Nicolas Saunier and Mostafa Ameli and Gregory S. Macfarlane and Bahman Madadi and Cathy Wu}},
+  year={{2026}},
+  eprint={{2601.14429}},
+  journal={{arXiv preprint arXiv:2601.14429}},
+  archivePrefix={{arXiv}},
+  primaryClass={{cs.DL}},
+  url={{https://arxiv.org/abs/2601.14429}}}}</pre>
         </div>
       </div>
     </div>
@@ -674,8 +726,7 @@ html = f"""<!doctype html>
         const metaInst = cd && cd[7] ? cd[7] : "Unknown Institution";
         const metaKeywords = cd && cd[8] ? cd[8] : "";
         const metaFunding = cd && cd[9] ? cd[9] : "";
-        const metaAck = cd && cd[10] ? cd[10] : "";
-        const metaOpenAccess = cd && cd[11] ? cd[11] : "False";
+        const metaOpenAccess = cd && cd[10] ? cd[10] : "False";
         
         const topic = (pt.data && pt.data.meta) ? pt.data.meta.topic : (pt.topic || "Unknown");
 
@@ -843,6 +894,22 @@ html = f"""<!doctype html>
     document.getElementById("codeSelect").addEventListener("change", updateVisibility);
     document.getElementById("dataSelect").addEventListener("change", updateVisibility);
     document.getElementById("searchInput").addEventListener("input", updateVisibility);
+
+    // Copy BibTeX Functionality
+    document.getElementById("copyBibBtn").addEventListener("click", function() {{
+      const bibtex = document.getElementById("bibtexText").innerText;
+      navigator.clipboard.writeText(bibtex).then(() => {{
+        const originalText = this.innerText;
+        this.innerText = "Copied!";
+        this.style.background = "#059669";
+        this.style.color = "white";
+        setTimeout(() => {{
+          this.innerText = originalText;
+          this.style.background = "";
+          this.style.color = "";
+        }}, 2000);
+      }});
+    }});
   </script>
 </body>
 </html>
