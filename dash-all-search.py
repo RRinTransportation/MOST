@@ -260,6 +260,11 @@ html = f"""<!doctype html>
       height: calc(100vh - 56px);
       overflow-y: auto;
     }}
+    .sidebar-header {{
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }}
     .main-content {{
       flex: 1;
       min-width: 0; /* Prevent flex item from overflowing */
@@ -521,21 +526,48 @@ html = f"""<!doctype html>
     @media (max-width: 1024px) {{
       .wrap {{
         flex-direction: column;
-        gap: 24px;
+        align-items: stretch;
+        gap: 16px;
         margin: 16px auto;
         padding: 0 12px;
       }}
       .sidebar {{
-        flex: none;
+        display: contents;
+      }}
+      .sidebar-header {{
+        order: 1;
         width: 100%;
-        height: auto;
-        position: static;
-        overflow-y: visible;
+        flex-direction: row;
+        align-items: center;
+        gap: 16px;
+      }}
+      .sidebar-header img {{
+        height: 48px !important;
+        width: auto;
+        align-self: center !important;
+      }}
+      .sidebar-header h1 {{
+        font-size: 18px;
+        line-height: 1.2;
       }}
       .main-content {{
-        height: 70vh;
-        min-height: 400px;
+        order: 2;
+        height: 50vh;
+        min-height: 350px;
         width: 100%;
+      }}
+      .controls {{
+        order: 3;
+        width: 100%;
+        gap: 10px;
+      }}
+      .footer {{
+        order: 4;
+        width: 100%;
+      }}
+      /* Mobile text size fixes */
+      select, input[type="text"], .btn, .btn-toggle {{
+        font-size: 16px;
       }}
     }}
   </style>
@@ -543,7 +575,7 @@ html = f"""<!doctype html>
 <body>
   <div class="wrap">
     <div class="sidebar">
-      <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div class="sidebar-header">
         <a href="https://rerite.org" target="_blank" rel="noopener noreferrer" style="display: inline-block; transition: opacity 0.2s;">
             <img src="./images/logo_png.png" alt="Logo" style="height: 60px; width: auto; align-self: flex-start;">
         </a>
@@ -692,6 +724,24 @@ html = f"""<!doctype html>
       displaylogo: false,
       scrollZoom: true
     }};
+
+    // Mobile adjustments for dense dots
+    if (window.innerWidth < 768) {{
+      traces.forEach(t => {{
+        if (t.marker && t.marker.size) {{
+          // Reduce marker size on mobile to reduce visual density
+          // Star (10) -> ~6, Circle (6) -> ~3.5
+          t.marker.size = t.marker.size * 0.6;
+        }}
+      }});
+      // Tighter margins on mobile
+      if (layout.margin) {{
+          layout.margin.l = 10;
+          layout.margin.r = 10;
+          layout.margin.t = 10;
+          layout.margin.b = 30;
+      }}
+    }}
 
     // View state
     let currentView = "code"; // 'code' or 'data'
