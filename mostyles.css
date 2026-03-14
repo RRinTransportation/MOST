@@ -90,6 +90,12 @@ p {
   color: var(--text-light);
 }
 
+/* Updated main content paragraph size */
+.content-container p,
+.blog-content p {
+  font-size: 1.1rem; 
+}
+
 a {
   color: var(--primary-color);
   text-decoration: none;
