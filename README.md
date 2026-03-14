@@ -22,4 +22,21 @@ OTSM/
 ├── explorer.html        # Example additional page
 ├── README.md           # This file
 └── .gitignore          # Git ignore rules
+
+## Blog
+
+The blog is generated from markdown files in `blog/posts/`. To update the blog:
+
+1. Add a new markdown file to `blog/posts/`.
+2. Run `python build_blog.py` to compile the markdown files to HTML.
+3. The generated HTML files will be in `blog/` and the main blog index will be at `blog/index.html`.
+
+Dependencies:
+- `markdown`
+- `jinja2`
+
+To install dependencies:
+```bash
+pip install markdown jinja2
+```
 ```

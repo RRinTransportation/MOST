@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>How do we validate the features extracted by the LLM? - MOST Blog</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    /* Add some basic blog styles */
+    .blog-post {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    .blog-meta {
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    .blog-content {
+      line-height: 1.6;
+      font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+    }
+    .blog-content h1, .blog-content h2, .blog-content h3 {
+      margin-top: 1.5rem;
+    }
+    .blog-content p {
+        margin-bottom: 1rem;
+    }
+    .back-link {
+        display: inline-block;
+        margin-bottom: 1rem;
+        text-decoration: none;
+        color: var(--primary-color);
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <a class="navbar-brand" href="../index.html" aria-label="Home">
+       <!-- Assuming logo is at /images/logo_png.png, so from blog/ it is ../images/logo_png.png -->
+      <img src="../images/logo_png.png" alt="RERITE Logo">
+    </a>
+    <button class="navbar-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <ul class="navbar-nav">
+      <li><a class="nav-link" href="../index.html">Home</a></li>
+      <li><a class="nav-link" href="index.html">Blog</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="content-container">
+    <main>
+        <article class="blog-post">
+            <a href="index.html" class="back-link">&larr; Back to Blog</a>
+            <header>
+                <h1>How do we validate the features extracted by the LLM?</h1>
+                <div class="blog-meta">
+                    <span>2026-03-13</span> | <span>Junyi Ji</span>
+                </div>
+            </header>
+            <div class="blog-content">
+                <h2>Method: Agreement analysis</h2>
+            </div>
+        </article>
+    </main>
+    
+    <footer>
+        <div class="container">
+          <div class="footer-bottom">
+            <p>&copy; 2024 - 2026 <a href="../index.html">MOST Project</a>. All rights reserved.</p>
+          </div>
+        </div>
+    </footer>
+</div>
+
+<script>
+    // Navigation script reuse
+    (function() {
+      const navbar = document.querySelector('.navbar');
+      const toggle = navbar?.querySelector('.navbar-toggle');
+      const navList = navbar?.querySelector('.navbar-nav');
+
+      if (!navbar || !toggle || !navList) {
+        return;
+      }
+
+      const closeMenu = () => {
+        navbar.classList.remove('navbar--open');
+        toggle.setAttribute('aria-expanded', 'false');
+      };
+
+      toggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isOpen = navbar.classList.toggle('navbar--open');
+        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!navbar.contains(event.target)) {
+          closeMenu();
+        }
+      });
+    })();
+</script>
+
+</body>
+</html>

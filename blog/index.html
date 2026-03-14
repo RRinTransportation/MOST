@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>MOST Blog</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .blog-list {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+    .post-item {
+        border-bottom: 1px solid #eee;
+        padding: 1.5rem 0;
+    }
+    .post-item:last-child {
+        border-bottom: none;
+    }
+    .post-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+    }
+    .post-title a {
+        text-decoration: none;
+        color: inherit;
+    }
+    .post-title a:hover {
+        color: var(--primary-color);
+    }
+    .post-meta {
+        font-size: 0.9rem;
+        color: #777;
+        margin-bottom: 1rem;
+    }
+    .post-desc {
+        line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <a class="navbar-brand" href="../index.html" aria-label="Home">
+       <!-- Assuming logo is at /images/logo_png.png, so from blog/ it is ../images/logo_png.png -->
+      <img src="../images/logo_png.png" alt="RERITE Logo">
+    </a>
+    <button class="navbar-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <ul class="navbar-nav">
+      <li><a class="nav-link" href="../index.html">Home</a></li>
+      <li><a class="nav-link" href="index.html">Blog</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="content-container">
+    <main>
+        <section class="blog-list">
+            <h1>MOST Blog</h1>
+            <p>Recent updates and news.</p>
+            
+            <div id="posts-container">
+                <!-- Posts will be injected here -->
+                
+                <article class="post-item">
+                    <h2 class="post-title"><a href="validate-llm-features.html">How do we validate the features extracted by the LLM?</a></h2>
+                    <div class="post-meta">
+                        <span>2026-03-13</span> | <span>Junyi Ji</span>
+                    </div>
+                    <div class="post-desc">
+                        We are sharing the methods we use to validate the LLM-extracted features.
+                    </div>
+                </article>
+                
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+          <div class="footer-bottom">
+            <p>&copy; 2024 - 2026 <a href="../index.html">MOST Project</a>. All rights reserved.</p>
+          </div>
+        </div>
+    </footer>
+</div>
+
+<script>
+    // Navigation script reuse
+    (function() {
+      const navbar = document.querySelector('.navbar');
+      const toggle = navbar?.querySelector('.navbar-toggle');
+      const navList = navbar?.querySelector('.navbar-nav');
+
+      if (!navbar || !toggle || !navList) {
+        return;
+      }
+
+      const closeMenu = () => {
+        navbar.classList.remove('navbar--open');
+        toggle.setAttribute('aria-expanded', 'false');
+      };
+
+      toggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isOpen = navbar.classList.toggle('navbar--open');
+        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!navbar.contains(event.target)) {
+          closeMenu();
+        }
+      });
+    })();
+</script>
+
+</body>
+</html>
