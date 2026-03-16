@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>How do we validate the features extracted by the LLM? - MOST Blog</title>
   <link rel="stylesheet" href="https://www.rerite.org/MOST/mostyles.css">
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    };
+  </script>
   <style>
     /* Add some basic blog styles */
     .blog-post {
@@ -61,12 +70,22 @@
             <header>
                 <h1>How do we validate the features extracted by the LLM?</h1>
                 <div class="blog-meta">
-                    <span>2026-03-13</span> | <span>Junyi Ji</span>
+                    <span>2026-03-19</span> | <span>Junyi Ji</span>
                 </div>
             </header>
             <div class="blog-content">
-                <h2>Method: Agreement analysis</h2>
-<p>Under construction now.</p>
+                <p>This blog is under construction. The ready date is expected to be 2026-03-19.</p>
+<p>The main concerns about LLM for feature extraction come from the trust.  We want to make sure the features extracted by LLM are useful for downstream tasks. </p>
+<h2>Method: Inter-rater agreement analysis</h2>
+<h3>Cohen's Kappa</h3>
+<p>Cohen's kappa coefficient (symbol $\kappa$, lowercase Greek kappa) is a statistic used to measure inter-rater reliability for qualitative or categorical data <a href="#ref-1">[1]</a>.</p>
+<p>$$
+\kappa = \frac{p_o - p_e}{1 - p_e}
+$$</p>
+<h3>Fleiss's Kappa</h3>
+<p><strong>Our next blog will share our story on the manual validation process. Staying tuned!</strong></p>
+<h3>References</h3>
+<p><a id="ref-1"></a>[1] McHugh, M. L. (2012). Interrater reliability: the kappa statistic. Biochemia medica, 22(3), 276-282.</p>
             </div>
         </article>
     </main>
