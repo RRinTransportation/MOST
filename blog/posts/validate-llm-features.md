@@ -9,9 +9,10 @@ This blog is under construction. The ready date is expected to be 2026-03-19.
 The main concerns about LLM for feature extraction come from the trust.  We want to make sure the features extracted by LLM are useful for downstream tasks. 
 
 ## Method: Inter-rater agreement analysis
+In general, inter-rater agreement analysis is a common method to evaluate the reliability of qualitative data. It measures the degree of agreement between two or more raters who independently classify items into categories. In this study, we use Cohen's kappa and Fleiss's kappa to evaluate the agreement between the features extracted by LLM and the features extracted by human annotators.
 
 ### Cohen's Kappa 
-Cohen's kappa coefficient (symbol $\kappa$, lowercase Greek kappa) is a statistic used to measure inter-rater reliability for qualitative or categorical data <a href="#ref-1">[1]</a>.
+Cohen's kappa coefficient (Cohen's $\kappa$) is a statistic used to measure inter-rater reliability for qualitative or categorical data <a href="#ref-1">[1]</a>.
 
 $$
 \kappa = \frac{p_o - p_e}{1 - p_e}
