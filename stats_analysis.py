@@ -318,7 +318,7 @@ def render_html(summary: dict[str, object]) -> str:
                   <option value="data_cite_or_link_any_pct">Any cite/link data %</option>
                   <option value="data_available_pct">Repository only %</option>
                   <option value="data_cite_pct">Cite/link only %</option>
-                  <option value="data_none_pct">Data none %</option>
+                  <option value="data_none_pct" selected>Data none %</option>
                   <option value="group">Name</option>
                 </select>
               </label>
@@ -326,8 +326,12 @@ def render_html(summary: dict[str, object]) -> str:
                 Direction
                 <select data-control="data-direction">
                   <option value="desc">High to low</option>
-                  <option value="asc">Low to high</option>
+                  <option value="asc" selected>Low to high</option>
                 </select>
+              </label>
+              <label class="average-toggle">
+                <input type="checkbox" data-control="data-average">
+                Show average line
               </label>
             </div>
             <div data-role="data-chart"></div>
@@ -338,7 +342,7 @@ def render_html(summary: dict[str, object]) -> str:
                 Code sort
                 <select data-control="code-sort">
                   <option value="n">Article number</option>
-                  <option value="code_yes_pct">Code yes %</option>
+                  <option value="code_yes_pct" selected>Code yes %</option>
                   <option value="code_no_pct">Code no %</option>
                   <option value="group">Name</option>
                 </select>
@@ -346,9 +350,13 @@ def render_html(summary: dict[str, object]) -> str:
               <label>
                 Direction
                 <select data-control="code-direction">
-                  <option value="desc">High to low</option>
+                  <option value="desc" selected>High to low</option>
                   <option value="asc">Low to high</option>
                 </select>
+              </label>
+              <label class="average-toggle">
+                <input type="checkbox" data-control="code-average">
+                Show average line
               </label>
             </div>
             <div data-role="code-chart"></div>
@@ -564,6 +572,18 @@ def render_html(summary: dict[str, object]) -> str:
       font-family: 'Karla', sans-serif;
       font-size: 0.92rem;
     }}
+    .chart-toolbar .average-toggle {{
+      min-height: 34px;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.45rem;
+      padding-top: 1.1rem;
+      white-space: nowrap;
+    }}
+    .average-toggle input {{
+      accent-color: var(--primary-color);
+      margin: 0;
+    }}
     .availability-chart {{
       display: block;
       width: 100%;
@@ -591,6 +611,17 @@ def render_html(summary: dict[str, object]) -> str:
     .axis-grid {{
       stroke: #ece5dc;
       stroke-width: 1;
+    }}
+    .average-line {{
+      stroke: #c23b2e;
+      stroke-width: 2;
+      stroke-dasharray: 5 4;
+      pointer-events: none;
+    }}
+    .average-label {{
+      fill: #c23b2e;
+      font-size: 10.5px;
+      font-weight: 700;
     }}
     .chart-percent {{
       font-size: 10px;
@@ -761,7 +792,32 @@ def render_html(summary: dict[str, object]) -> str:
       return luminance > 0.62;
     }
 
-    function chartSvg(rows, categories, colors, labels, prefix, title) {
+    function metricLabel(metric) {
+      const labels = {
+        data_repository_any_pct: "any repository data",
+        data_cite_or_link_any_pct: "any cite/link data",
+        data_available_pct: "repository only",
+        data_cite_pct: "cite/link only",
+        data_none_pct: "data none",
+        code_yes_pct: "code yes",
+        code_no_pct: "code no",
+      };
+      return labels[metric] || "";
+    }
+
+    function averageReference(metric, invertFromHundred = false, labelOverride = null) {
+      const rawValue = Number(STATS_DATA.overall?.[metric]);
+      const label = labelOverride || metricLabel(metric);
+      if (!Number.isFinite(rawValue) || !label) return null;
+      const value = invertFromHundred ? Math.round((100 - rawValue) * 10) / 10 : rawValue;
+      const detail = `${value}%`;
+      return {
+        value,
+        label: `Overall average: ${label} = ${detail}`,
+      };
+    }
+
+    function chartSvg(rows, categories, colors, labels, prefix, title, average) {
       const rowHeight = 36;
       const leftWidth = 292;
       const barWidth = 520;
@@ -805,6 +861,16 @@ def render_html(summary: dict[str, object]) -> str:
         svg += `<text x="${leftWidth + barWidth + 14}" y="${y + 22}" class="chart-n">n=${total.toLocaleString()}</text>`;
       });
 
+      if (average && Number.isFinite(average.value)) {
+        const averageValue = Math.max(0, Math.min(100, Number(average.value)));
+        const averageX = leftWidth + barWidth * averageValue / 100;
+        const labelX = Math.max(leftWidth + 4, Math.min(leftWidth + barWidth - 4, averageX));
+        const labelAnchor = averageValue > 84 ? "end" : averageValue < 16 ? "start" : "middle";
+        const lineBottom = top + rowHeight * rows.length - 6;
+        svg += `<line x1="${averageX.toFixed(2)}" y1="${top - 8}" x2="${averageX.toFixed(2)}" y2="${lineBottom}" class="average-line"><title>${escapeHtml(average.label)}</title></line>`;
+        svg += `<text x="${labelX.toFixed(2)}" y="${top - 31}" text-anchor="${labelAnchor}" class="average-label">${escapeHtml(average.label)}</text>`;
+      }
+
       let legendX = leftWidth;
       const legendY = height - 18;
       categories.forEach((category) => {
@@ -830,14 +896,16 @@ def render_html(summary: dict[str, object]) -> str:
       const dataDirection = section.querySelector('[data-control="data-direction"]').value;
       const codeSortMetric = section.querySelector('[data-control="code-sort"]').value;
       const codeDirection = section.querySelector('[data-control="code-direction"]').value;
+      const showDataAverage = section.querySelector('[data-control="data-average"]').checked;
+      const showCodeAverage = section.querySelector('[data-control="code-average"]').checked;
       const limitValue = Number(meta.defaultLimit) || 0;
       const rows = STATS_DATA.groups[slug] || [];
       const dataSorted = sortRows(rows, dataSortMetric, dataDirection);
       const codeSorted = sortRows(rows, codeSortMetric, codeDirection);
       const dataShown = limitValue > 0 ? dataSorted.slice(0, limitValue) : dataSorted;
       const codeShown = limitValue > 0 ? codeSorted.slice(0, limitValue) : codeSorted;
-      section.querySelector('[data-role="data-chart"]').innerHTML = chartSvg(dataShown, dataCategoryOrder(dataSortMetric), DATA_COLORS, DATA_LABELS, "data", `Data availability by ${meta.title}`);
-      section.querySelector('[data-role="code-chart"]').innerHTML = chartSvg(codeShown, CODE_CATEGORIES, CODE_COLORS, CODE_LABELS, "code", `Code availability by ${meta.title}`);
+      section.querySelector('[data-role="data-chart"]').innerHTML = chartSvg(dataShown, dataCategoryOrder(dataSortMetric), DATA_COLORS, DATA_LABELS, "data", `Data availability by ${meta.title}`, showDataAverage ? averageReference("data_none_pct", true, "(100% - data none)") : null);
+      section.querySelector('[data-role="code-chart"]').innerHTML = chartSvg(codeShown, CODE_CATEGORIES, CODE_COLORS, CODE_LABELS, "code", `Code availability by ${meta.title}`, showCodeAverage ? averageReference("code_yes_pct") : null);
     }
 
     function applyViewPreferences() {
@@ -853,7 +921,7 @@ def render_html(summary: dict[str, object]) -> str:
     }
 
     document.querySelectorAll("[data-section]").forEach((section) => {
-      section.querySelectorAll('[data-control$="-sort"], [data-control$="-direction"]').forEach((control) => {
+      section.querySelectorAll('[data-control$="-sort"], [data-control$="-direction"], [data-control$="-average"]').forEach((control) => {
         control.addEventListener("change", () => renderSection(section));
       });
       renderSection(section);
