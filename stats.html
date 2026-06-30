@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MOST Availability Stats</title>
+  <link rel="stylesheet" href="mostyles.css">
+  <style>
+    .stats-hero {
+      padding: 2.4rem 1rem 1.8rem;
+      background: linear-gradient(135deg, var(--secondary-color) 0%, #f5e8d8 100%);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .stats-hero h1, .stats-hero p {
+      max-width: 980px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+    }
+    .stats-hero p {
+      font-size: 1.05rem;
+      color: var(--text-dark);
+      margin-bottom: 0;
+    }
+    .stats-layout {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.25rem 1rem 4rem;
+    }
+    .chart-panel {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: var(--shadow-md);
+    }
+    .stats-section {
+      margin-top: 1.5rem;
+    }
+    .stats-section.is-hidden,
+    [data-view].is-hidden {
+      display: none !important;
+    }
+    .section-heading {
+      margin: 1.5rem 0 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+    .section-heading p {
+      max-width: 820px;
+      margin-bottom: 0;
+      font-size: 0.98rem;
+    }
+    .chart-toolbar select:focus,
+    .control-group select:focus {
+      outline: 2px solid rgba(43, 122, 155, 0.18);
+      border-color: var(--primary-color);
+    }
+    .stats-view-controls {
+      display: grid;
+      grid-template-columns: 1.5fr minmax(180px, 260px) minmax(180px, 240px);
+      gap: 1rem;
+      align-items: end;
+      margin-top: 1.25rem;
+      padding: 1rem;
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: var(--shadow-md);
+    }
+    .stats-view-controls h2,
+    .stats-view-controls h3,
+    .stats-view-controls p {
+      margin-bottom: 0.35rem;
+    }
+    .stats-view-controls h2 {
+      font-size: 1.25rem;
+    }
+    .stats-view-controls h3 {
+      font-family: 'Karla', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+    .control-group {
+      min-width: 0;
+    }
+    .control-intro p {
+      margin-bottom: 0;
+      font-size: 0.95rem;
+    }
+    .control-group label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      font-family: 'Karla', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .control-group select {
+      min-height: 38px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.45rem 0.55rem;
+      background: #fbfaf7;
+      color: var(--text-dark);
+      font-family: 'Karla', sans-serif;
+      font-size: 0.95rem;
+      max-width: 320px;
+    }
+    .toggle-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .toggle-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      min-height: 38px;
+      padding: 0.35rem 0.7rem;
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      background: #fbfaf7;
+      color: var(--text-dark);
+      font-family: 'Karla', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .toggle-pill:has(input:checked) {
+      border-color: var(--primary-color);
+      background: rgba(43, 122, 155, 0.1);
+      color: var(--primary-dark);
+    }
+    .toggle-pill input {
+      accent-color: var(--primary-color);
+    }
+    .visual-stack {
+      display: grid;
+      gap: 1rem;
+      align-items: start;
+    }
+    .chart-panel {
+      padding: 1rem 1rem 0.85rem;
+      overflow-x: auto;
+    }
+    .chart-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: end;
+      margin: -0.1rem 0 0.85rem;
+      padding: 0 0 0.85rem;
+      border-bottom: 1px solid var(--border-color);
+      font-family: 'Karla', sans-serif;
+    }
+    .chart-toolbar label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+    .chart-toolbar select {
+      min-height: 34px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.35rem 0.5rem;
+      background: #fbfaf7;
+      color: var(--text-dark);
+      font-family: 'Karla', sans-serif;
+      font-size: 0.92rem;
+    }
+    .availability-chart {
+      display: block;
+      width: 100%;
+      min-width: 760px;
+      height: auto;
+      font-family: 'Karla', sans-serif;
+    }
+    .chart-title {
+      font-size: 16px;
+      font-weight: 700;
+      fill: var(--text-dark);
+    }
+    .chart-label {
+      font-size: 12px;
+      fill: var(--text-dark);
+    }
+    .chart-n, .legend-label {
+      font-size: 11.5px;
+      fill: var(--text-light);
+    }
+    .axis-label {
+      font-size: 10.5px;
+      fill: var(--text-light);
+    }
+    .axis-grid {
+      stroke: #ece5dc;
+      stroke-width: 1;
+    }
+    .chart-percent {
+      font-size: 10px;
+      fill: #fff;
+      font-weight: 700;
+      pointer-events: none;
+    }
+    .chart-percent.is-dark {
+      fill: var(--text-dark);
+    }
+    .bar-bg {
+      fill: #f2eee8;
+    }
+    .chart-segment {
+      cursor: help;
+      transition: opacity 0.15s ease;
+    }
+    .chart-segment:hover {
+      opacity: 0.82;
+    }
+    .chart-tooltip {
+      position: fixed;
+      z-index: 2000;
+      display: none;
+      max-width: 320px;
+      padding: 0.45rem 0.6rem;
+      border-radius: 6px;
+      background: rgba(44, 62, 80, 0.96);
+      color: #fff;
+      font-family: 'Karla', sans-serif;
+      font-size: 0.86rem;
+      line-height: 1.35;
+      pointer-events: none;
+      box-shadow: var(--shadow-md);
+    }
+    .chart-tooltip.is-visible {
+      display: block;
+    }
+    @media (max-width: 900px) {
+      .stats-view-controls {
+        grid-template-columns: 1fr 1fr;
+      }
+      .control-intro {
+        grid-column: 1 / -1;
+      }
+      .stats-hero {
+        padding: 2rem 1rem 1.5rem;
+      }
+    }
+    @media (max-width: 560px) {
+      .stats-view-controls {
+        grid-template-columns: 1fr;
+      }
+      .control-intro {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a class="navbar-brand" href="index.html" aria-label="Home">
+        <img src="images/logo_png.png" alt="RERITE Logo">
+      </a>
+      <button class="navbar-toggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="navbar-nav">
+        <li><a class="nav-link" href="index.html">Home</a></li>
+        <li><a class="nav-link" href="explorer.html">Explorer</a></li>
+        <li><a class="nav-link" href="stats.html">Stats</a></li>
+        <li><a class="nav-link" href="blog/index.html">Blog</a></li>
+        <li><a class="nav-link" href="https://arxiv.org/abs/2601.14429">Paper</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <script>
+    (function() {
+      const navbar = document.querySelector('.navbar');
+      const toggle = navbar?.querySelector('.navbar-toggle');
+      const navList = navbar?.querySelector('.navbar-nav');
+      if (!navbar || !toggle || !navList) return;
+      const closeMenu = () => {
+        navbar.classList.remove('navbar--open');
+        toggle.setAttribute('aria-expanded', 'false');
+      };
+      toggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isOpen = navbar.classList.toggle('navbar--open');
+        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+      document.addEventListener('click', (event) => {
+        if (!navbar.contains(event.target)) closeMenu();
+      });
+      navList.addEventListener('click', (event) => {
+        if (event.target.closest('a')) closeMenu();
+      });
+      window.addEventListener('resize', () => {
+        if (window.innerWidth > 992) closeMenu();
+      });
+    })();
+  </script>
+
+  <header class="stats-hero">
+    <h1>Availability Stats</h1>
+    <p>Explore code and data availability by topic, journal, and primary region for the paper analysis set (N=10,480).</p>
+  </header>
+
+  <main class="stats-layout">
+    
+    <section class="stats-view-controls" aria-label="Choose visible stats views">
+      <div class="control-group control-intro">
+        <h2>Choose View</h2>
+        <p>Focus the page on one analysis at a time.</p>
+      </div>
+      <div class="control-group">
+        <label>
+          Grouping
+          <select data-group-select>
+          <option value="topic">Topic</option>
+          <option value="journal">Journal</option>
+          <option value="primary_region">Primary Region</option>
+          </select>
+        </label>
+      </div>
+      <div class="control-group">
+        <label>
+          Chart
+          <select data-chart-select>
+            <option value="data">Data Chart</option>
+            <option value="code">Code Chart</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+
+    
+      <section class="stats-section" id="topic" data-section="topic">
+        <div class="section-heading">
+          <h2>Topic</h2>
+          <p>Showing all groups. Use the sort controls inside the chart, and hover over bar segments for counts.</p>
+        </div>
+        <div class="visual-stack">
+          <div class="chart-panel" data-view="data">
+            <div class="chart-toolbar">
+              <label>
+                Data sort
+                <select data-control="data-sort">
+                  <option value="n">Article number</option>
+                  <option value="data_repository_any_pct">Any repository data %</option>
+                  <option value="data_cite_or_link_any_pct">Any cite/link data %</option>
+                  <option value="data_available_pct">Repository only %</option>
+                  <option value="data_cite_pct">Cite/link only %</option>
+                  <option value="data_none_pct">Data none %</option>
+                  <option value="group">Name</option>
+                </select>
+              </label>
+              <label>
+                Direction
+                <select data-control="data-direction">
+                  <option value="desc">High to low</option>
+                  <option value="asc">Low to high</option>
+                </select>
+              </label>
+            </div>
+            <div data-role="data-chart"></div>
+          </div>
+          <div class="chart-panel" data-view="code">
+            <div class="chart-toolbar">
+              <label>
+                Code sort
+                <select data-control="code-sort">
+                  <option value="n">Article number</option>
+                  <option value="code_yes_pct">Code yes %</option>
+                  <option value="code_no_pct">Code no %</option>
+                  <option value="group">Name</option>
+                </select>
+              </label>
+              <label>
+                Direction
+                <select data-control="code-direction">
+                  <option value="desc">High to low</option>
+                  <option value="asc">Low to high</option>
+                </select>
+              </label>
+            </div>
+            <div data-role="code-chart"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-section" id="journal" data-section="journal">
+        <div class="section-heading">
+          <h2>Journal</h2>
+          <p>Showing all groups. Use the sort controls inside the chart, and hover over bar segments for counts.</p>
+        </div>
+        <div class="visual-stack">
+          <div class="chart-panel" data-view="data">
+            <div class="chart-toolbar">
+              <label>
+                Data sort
+                <select data-control="data-sort">
+                  <option value="n">Article number</option>
+                  <option value="data_repository_any_pct">Any repository data %</option>
+                  <option value="data_cite_or_link_any_pct">Any cite/link data %</option>
+                  <option value="data_available_pct">Repository only %</option>
+                  <option value="data_cite_pct">Cite/link only %</option>
+                  <option value="data_none_pct">Data none %</option>
+                  <option value="group">Name</option>
+                </select>
+              </label>
+              <label>
+                Direction
+                <select data-control="data-direction">
+                  <option value="desc">High to low</option>
+                  <option value="asc">Low to high</option>
+                </select>
+              </label>
+            </div>
+            <div data-role="data-chart"></div>
+          </div>
+          <div class="chart-panel" data-view="code">
+            <div class="chart-toolbar">
+              <label>
+                Code sort
+                <select data-control="code-sort">
+                  <option value="n">Article number</option>
+                  <option value="code_yes_pct">Code yes %</option>
+                  <option value="code_no_pct">Code no %</option>
+                  <option value="group">Name</option>
+                </select>
+              </label>
+              <label>
+                Direction
+                <select data-control="code-direction">
+                  <option value="desc">High to low</option>
+                  <option value="asc">Low to high</option>
+                </select>
+              </label>
+            </div>
+            <div data-role="code-chart"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-section" id="primary_region" data-section="primary_region">
+        <div class="section-heading">
+          <h2>Primary Region</h2>
+          <p>Showing the top 25 groups by article count. Use the sort controls inside the chart, and hover over bar segments for counts.</p>
+        </div>
+        <div class="visual-stack">
+          <div class="chart-panel" data-view="data">
+            <div class="chart-toolbar">
+              <label>
+                Data sort
+                <select data-control="data-sort">
+                  <option value="n">Article number</option>
+                  <option value="data_repository_any_pct">Any repository data %</option>
+                  <option value="data_cite_or_link_any_pct">Any cite/link data %</option>
+                  <option value="data_available_pct">Repository only %</option>
+                  <option value="data_cite_pct">Cite/link only %</option>
+                  <option value="data_none_pct">Data none %</option>
+                  <option value="group">Name</option>
+                </select>
+              </label>
+              <label>
+                Direction
+                <select data-control="data-direction">
+                  <option value="desc">High to low</option>
+                  <option value="asc">Low to high</option>
+                </select>
+              </label>
+            </div>
+            <div data-role="data-chart"></div>
+          </div>
+          <div class="chart-panel" data-view="code">
+            <div class="chart-toolbar">
+              <label>
+                Code sort
+                <select data-control="code-sort">
+                  <option value="n">Article number</option>
+                  <option value="code_yes_pct">Code yes %</option>
+                  <option value="code_no_pct">Code no %</option>
+                  <option value="group">Name</option>
+                </select>
+              </label>
+              <label>
+                Direction
+                <select data-control="code-direction">
+                  <option value="desc">High to low</option>
+                  <option value="asc">Low to high</option>
+                </select>
+              </label>
+            </div>
+            <div data-role="code-chart"></div>
+          </div>
+        </div>
+      </section>
+
+  </main>
+  <div class="chart-tooltip" data-role="chart-tooltip"></div>
+
+  <footer>
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2024 - 2026 <a href="https://rerite.org/MOST">MOST Project</a>. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+  <script>
+    const STATS_DATA = {"overall": {"group": "Overall", "display_group": "Overall", "n": 10480, "code_yes": 528, "code_yes_pct": 5.0, "code_no": 9952, "code_no_pct": 95.0, "data_available": 264, "data_available_pct": 2.5, "data_cite": 2906, "data_cite_pct": 27.7, "data_both": 108, "data_both_pct": 1.0, "data_none": 7202, "data_none_pct": 68.7, "data_repository_any": 372, "data_repository_any_pct": 3.5, "data_cite_or_link_any": 3014, "data_cite_or_link_any_pct": 28.8}, "groups": {"topic": [{"group": "Optimization & Routing Algorithms", "display_group": "Optimization & Routing Algorithms", "n": 1627, "code_yes": 114, "code_yes_pct": 7.0, "code_no": 1513, "code_no_pct": 93.0, "data_available": 53, "data_available_pct": 3.3, "data_cite": 468, "data_cite_pct": 28.8, "data_both": 10, "data_both_pct": 0.6, "data_none": 1096, "data_none_pct": 67.4, "data_repository_any": 63, "data_repository_any_pct": 3.9, "data_cite_or_link_any": 478, "data_cite_or_link_any_pct": 29.4}, {"group": "Automated Driving & Human Factors", "display_group": "Automated Driving & Human Factors", "n": 991, "code_yes": 34, "code_yes_pct": 3.4, "code_no": 957, "code_no_pct": 96.6, "data_available": 34, "data_available_pct": 3.4, "data_cite": 88, "data_cite_pct": 8.9, "data_both": 6, "data_both_pct": 0.6, "data_none": 863, "data_none_pct": 87.1, "data_repository_any": 40, "data_repository_any_pct": 4.0, "data_cite_or_link_any": 94, "data_cite_or_link_any_pct": 9.5}, {"group": "Data-Driven Modeling & Prediction", "display_group": "Data-Driven Modeling & Prediction", "n": 914, "code_yes": 142, "code_yes_pct": 15.5, "code_no": 772, "code_no_pct": 84.5, "data_available": 56, "data_available_pct": 6.1, "data_cite": 349, "data_cite_pct": 38.2, "data_both": 44, "data_both_pct": 4.8, "data_none": 465, "data_none_pct": 50.9, "data_repository_any": 100, "data_repository_any_pct": 10.9, "data_cite_or_link_any": 393, "data_cite_or_link_any_pct": 43.0}, {"group": "Travel & Mode Choice Behavior", "display_group": "Travel & Mode Choice Behavior", "n": 911, "code_yes": 28, "code_yes_pct": 3.1, "code_no": 883, "code_no_pct": 96.9, "data_available": 12, "data_available_pct": 1.3, "data_cite": 239, "data_cite_pct": 26.2, "data_both": 5, "data_both_pct": 0.5, "data_none": 655, "data_none_pct": 71.9, "data_repository_any": 17, "data_repository_any_pct": 1.9, "data_cite_or_link_any": 244, "data_cite_or_link_any_pct": 26.8}, {"group": "Social & Policy Aspects of Mobility", "display_group": "Social & Policy Aspects of Mobility", "n": 888, "code_yes": 26, "code_yes_pct": 2.9, "code_no": 862, "code_no_pct": 97.1, "data_available": 24, "data_available_pct": 2.7, "data_cite": 186, "data_cite_pct": 20.9, "data_both": 4, "data_both_pct": 0.5, "data_none": 674, "data_none_pct": 75.9, "data_repository_any": 28, "data_repository_any_pct": 3.2, "data_cite_or_link_any": 190, "data_cite_or_link_any_pct": 21.4}, {"group": "Transportation Emissions & Policy", "display_group": "Transportation Emissions & Policy", "n": 868, "code_yes": 20, "code_yes_pct": 2.3, "code_no": 848, "code_no_pct": 97.7, "data_available": 10, "data_available_pct": 1.2, "data_cite": 370, "data_cite_pct": 42.6, "data_both": 5, "data_both_pct": 0.6, "data_none": 483, "data_none_pct": 55.6, "data_repository_any": 15, "data_repository_any_pct": 1.7, "data_cite_or_link_any": 375, "data_cite_or_link_any_pct": 43.2}, {"group": "Supply Chain & Market Strategies", "display_group": "Supply Chain & Market Strategies", "n": 781, "code_yes": 6, "code_yes_pct": 0.8, "code_no": 775, "code_no_pct": 99.2, "data_available": 3, "data_available_pct": 0.4, "data_cite": 108, "data_cite_pct": 13.8, "data_both": 0, "data_both_pct": 0.0, "data_none": 670, "data_none_pct": 85.8, "data_repository_any": 3, "data_repository_any_pct": 0.4, "data_cite_or_link_any": 108, "data_cite_or_link_any_pct": 13.8}, {"group": "Traffic Flow & Network Control", "display_group": "Traffic Flow & Network Control", "n": 755, "code_yes": 45, "code_yes_pct": 6.0, "code_no": 710, "code_no_pct": 94.0, "data_available": 21, "data_available_pct": 2.8, "data_cite": 155, "data_cite_pct": 20.5, "data_both": 6, "data_both_pct": 0.8, "data_none": 573, "data_none_pct": 75.9, "data_repository_any": 27, "data_repository_any_pct": 3.6, "data_cite_or_link_any": 161, "data_cite_or_link_any_pct": 21.3}, {"group": "Driver Behavior & Safety Risk", "display_group": "Driver Behavior & Safety Risk", "n": 641, "code_yes": 10, "code_yes_pct": 1.6, "code_no": 631, "code_no_pct": 98.4, "data_available": 11, "data_available_pct": 1.7, "data_cite": 111, "data_cite_pct": 17.3, "data_both": 2, "data_both_pct": 0.3, "data_none": 517, "data_none_pct": 80.7, "data_repository_any": 13, "data_repository_any_pct": 2.0, "data_cite_or_link_any": 113, "data_cite_or_link_any_pct": 17.6}, {"group": "Urban Environment & Active Transport", "display_group": "Urban Environment & Active Transport", "n": 605, "code_yes": 25, "code_yes_pct": 4.1, "code_no": 580, "code_no_pct": 95.9, "data_available": 9, "data_available_pct": 1.5, "data_cite": 271, "data_cite_pct": 44.8, "data_both": 11, "data_both_pct": 1.8, "data_none": 314, "data_none_pct": 51.9, "data_repository_any": 20, "data_repository_any_pct": 3.3, "data_cite_or_link_any": 282, "data_cite_or_link_any_pct": 46.6}, {"group": "Public Transit Service & Demand", "display_group": "Public Transit Service & Demand", "n": 518, "code_yes": 29, "code_yes_pct": 5.6, "code_no": 489, "code_no_pct": 94.4, "data_available": 9, "data_available_pct": 1.7, "data_cite": 163, "data_cite_pct": 31.5, "data_both": 4, "data_both_pct": 0.8, "data_none": 342, "data_none_pct": 66.0, "data_repository_any": 13, "data_repository_any_pct": 2.5, "data_cite_or_link_any": 167, "data_cite_or_link_any_pct": 32.2}, {"group": "COVID-19 Impact on Travel & Activities", "display_group": "COVID-19 Impact on Travel & Activities", "n": 451, "code_yes": 17, "code_yes_pct": 3.8, "code_no": 434, "code_no_pct": 96.2, "data_available": 8, "data_available_pct": 1.8, "data_cite": 203, "data_cite_pct": 45.0, "data_both": 8, "data_both_pct": 1.8, "data_none": 232, "data_none_pct": 51.4, "data_repository_any": 16, "data_repository_any_pct": 3.5, "data_cite_or_link_any": 211, "data_cite_or_link_any_pct": 46.8}, {"group": "Electric Vehicles & Ride-Sharing", "display_group": "Electric Vehicles & Ride-Sharing", "n": 401, "code_yes": 29, "code_yes_pct": 7.2, "code_no": 372, "code_no_pct": 92.8, "data_available": 14, "data_available_pct": 3.5, "data_cite": 152, "data_cite_pct": 37.9, "data_both": 3, "data_both_pct": 0.7, "data_none": 232, "data_none_pct": 57.9, "data_repository_any": 17, "data_repository_any_pct": 4.2, "data_cite_or_link_any": 155, "data_cite_or_link_any_pct": 38.7}, {"group": "Air & Freight Logistics", "display_group": "Air & Freight Logistics", "n": 79, "code_yes": 2, "code_yes_pct": 2.5, "code_no": 77, "code_no_pct": 97.5, "data_available": 0, "data_available_pct": 0.0, "data_cite": 29, "data_cite_pct": 36.7, "data_both": 0, "data_both_pct": 0.0, "data_none": 50, "data_none_pct": 63.3, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 29, "data_cite_or_link_any_pct": 36.7}, {"group": "Road Infrastructure & Emergency Management", "display_group": "Road Infrastructure & Emergency Management", "n": 50, "code_yes": 1, "code_yes_pct": 2.0, "code_no": 49, "code_no_pct": 98.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 14, "data_cite_pct": 28.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 36, "data_none_pct": 72.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 14, "data_cite_or_link_any_pct": 28.0}], "journal": [{"group": "Transportation Research Part C: Emerging Technologies", "display_group": "TR-C", "n": 2009, "code_yes": 212, "code_yes_pct": 10.6, "code_no": 1797, "code_no_pct": 89.4, "data_available": 86, "data_available_pct": 4.3, "data_cite": 596, "data_cite_pct": 29.7, "data_both": 45, "data_both_pct": 2.2, "data_none": 1282, "data_none_pct": 63.8, "data_repository_any": 131, "data_repository_any_pct": 6.5, "data_cite_or_link_any": 641, "data_cite_or_link_any_pct": 31.9}, {"group": "Transportation Research Part D: Transport and Environment", "display_group": "TR-D", "n": 1983, "code_yes": 72, "code_yes_pct": 3.6, "code_no": 1911, "code_no_pct": 96.4, "data_available": 36, "data_available_pct": 1.8, "data_cite": 759, "data_cite_pct": 38.3, "data_both": 21, "data_both_pct": 1.1, "data_none": 1167, "data_none_pct": 58.9, "data_repository_any": 57, "data_repository_any_pct": 2.9, "data_cite_or_link_any": 780, "data_cite_or_link_any_pct": 39.3}, {"group": "Transportation Research Part A: Policy and Practice", "display_group": "TR-A", "n": 1619, "code_yes": 64, "code_yes_pct": 4.0, "code_no": 1555, "code_no_pct": 96.0, "data_available": 28, "data_available_pct": 1.7, "data_cite": 538, "data_cite_pct": 33.2, "data_both": 14, "data_both_pct": 0.9, "data_none": 1039, "data_none_pct": 64.2, "data_repository_any": 42, "data_repository_any_pct": 2.6, "data_cite_or_link_any": 552, "data_cite_or_link_any_pct": 34.1}, {"group": "Transportation Research Part E: Logistics and Transportation Review", "display_group": "TR-E", "n": 1575, "code_yes": 41, "code_yes_pct": 2.6, "code_no": 1534, "code_no_pct": 97.4, "data_available": 22, "data_available_pct": 1.4, "data_cite": 350, "data_cite_pct": 22.2, "data_both": 7, "data_both_pct": 0.4, "data_none": 1196, "data_none_pct": 75.9, "data_repository_any": 29, "data_repository_any_pct": 1.8, "data_cite_or_link_any": 357, "data_cite_or_link_any_pct": 22.7}, {"group": "Transportation Research Part F: Traffic Psychology and Behaviour", "display_group": "TR-F", "n": 1475, "code_yes": 36, "code_yes_pct": 2.4, "code_no": 1439, "code_no_pct": 97.6, "data_available": 44, "data_available_pct": 3.0, "data_cite": 126, "data_cite_pct": 8.5, "data_both": 6, "data_both_pct": 0.4, "data_none": 1299, "data_none_pct": 88.1, "data_repository_any": 50, "data_repository_any_pct": 3.4, "data_cite_or_link_any": 132, "data_cite_or_link_any_pct": 8.9}, {"group": "Transportation Research Interdisciplinary Perspectives", "display_group": "TRIP", "n": 981, "code_yes": 36, "code_yes_pct": 3.7, "code_no": 945, "code_no_pct": 96.3, "data_available": 27, "data_available_pct": 2.8, "data_cite": 336, "data_cite_pct": 34.3, "data_both": 6, "data_both_pct": 0.6, "data_none": 612, "data_none_pct": 62.4, "data_repository_any": 33, "data_repository_any_pct": 3.4, "data_cite_or_link_any": 342, "data_cite_or_link_any_pct": 34.9}, {"group": "Transportation Research Part B: Methodological", "display_group": "TR-B", "n": 838, "code_yes": 67, "code_yes_pct": 8.0, "code_no": 771, "code_no_pct": 92.0, "data_available": 21, "data_available_pct": 2.5, "data_cite": 201, "data_cite_pct": 24.0, "data_both": 9, "data_both_pct": 1.1, "data_none": 607, "data_none_pct": 72.4, "data_repository_any": 30, "data_repository_any_pct": 3.6, "data_cite_or_link_any": 210, "data_cite_or_link_any_pct": 25.1}], "primary_region": [{"group": "China", "display_group": "China", "n": 2926, "code_yes": 83, "code_yes_pct": 2.8, "code_no": 2843, "code_no_pct": 97.2, "data_available": 32, "data_available_pct": 1.1, "data_cite": 633, "data_cite_pct": 21.6, "data_both": 10, "data_both_pct": 0.3, "data_none": 2251, "data_none_pct": 76.9, "data_repository_any": 42, "data_repository_any_pct": 1.4, "data_cite_or_link_any": 643, "data_cite_or_link_any_pct": 22.0}, {"group": "United States", "display_group": "United States", "n": 1858, "code_yes": 136, "code_yes_pct": 7.3, "code_no": 1722, "code_no_pct": 92.7, "data_available": 59, "data_available_pct": 3.2, "data_cite": 750, "data_cite_pct": 40.4, "data_both": 33, "data_both_pct": 1.8, "data_none": 1016, "data_none_pct": 54.7, "data_repository_any": 92, "data_repository_any_pct": 5.0, "data_cite_or_link_any": 783, "data_cite_or_link_any_pct": 42.1}, {"group": "Australia", "display_group": "Australia", "n": 496, "code_yes": 23, "code_yes_pct": 4.6, "code_no": 473, "code_no_pct": 95.4, "data_available": 12, "data_available_pct": 2.4, "data_cite": 114, "data_cite_pct": 23.0, "data_both": 5, "data_both_pct": 1.0, "data_none": 365, "data_none_pct": 73.6, "data_repository_any": 17, "data_repository_any_pct": 3.4, "data_cite_or_link_any": 119, "data_cite_or_link_any_pct": 24.0}, {"group": "Germany", "display_group": "Germany", "n": 466, "code_yes": 32, "code_yes_pct": 6.9, "code_no": 434, "code_no_pct": 93.1, "data_available": 26, "data_available_pct": 5.6, "data_cite": 115, "data_cite_pct": 24.7, "data_both": 5, "data_both_pct": 1.1, "data_none": 320, "data_none_pct": 68.7, "data_repository_any": 31, "data_repository_any_pct": 6.7, "data_cite_or_link_any": 120, "data_cite_or_link_any_pct": 25.8}, {"group": "Netherlands", "display_group": "Netherlands", "n": 391, "code_yes": 44, "code_yes_pct": 11.3, "code_no": 347, "code_no_pct": 88.7, "data_available": 32, "data_available_pct": 8.2, "data_cite": 86, "data_cite_pct": 22.0, "data_both": 6, "data_both_pct": 1.5, "data_none": 267, "data_none_pct": 68.3, "data_repository_any": 38, "data_repository_any_pct": 9.7, "data_cite_or_link_any": 92, "data_cite_or_link_any_pct": 23.5}, {"group": "Canada", "display_group": "Canada", "n": 350, "code_yes": 18, "code_yes_pct": 5.1, "code_no": 332, "code_no_pct": 94.9, "data_available": 8, "data_available_pct": 2.3, "data_cite": 101, "data_cite_pct": 28.9, "data_both": 6, "data_both_pct": 1.7, "data_none": 235, "data_none_pct": 67.1, "data_repository_any": 14, "data_repository_any_pct": 4.0, "data_cite_or_link_any": 107, "data_cite_or_link_any_pct": 30.6}, {"group": "United Kingdom", "display_group": "United Kingdom", "n": 227, "code_yes": 9, "code_yes_pct": 4.0, "code_no": 218, "code_no_pct": 96.0, "data_available": 5, "data_available_pct": 2.2, "data_cite": 66, "data_cite_pct": 29.1, "data_both": 4, "data_both_pct": 1.8, "data_none": 152, "data_none_pct": 67.0, "data_repository_any": 9, "data_repository_any_pct": 4.0, "data_cite_or_link_any": 70, "data_cite_or_link_any_pct": 30.8}, {"group": "Sweden", "display_group": "Sweden", "n": 215, "code_yes": 7, "code_yes_pct": 3.3, "code_no": 208, "code_no_pct": 96.7, "data_available": 4, "data_available_pct": 1.9, "data_cite": 61, "data_cite_pct": 28.4, "data_both": 2, "data_both_pct": 0.9, "data_none": 148, "data_none_pct": 68.8, "data_repository_any": 6, "data_repository_any_pct": 2.8, "data_cite_or_link_any": 63, "data_cite_or_link_any_pct": 29.3}, {"group": "Italy", "display_group": "Italy", "n": 214, "code_yes": 13, "code_yes_pct": 6.1, "code_no": 201, "code_no_pct": 93.9, "data_available": 9, "data_available_pct": 4.2, "data_cite": 61, "data_cite_pct": 28.5, "data_both": 1, "data_both_pct": 0.5, "data_none": 143, "data_none_pct": 66.8, "data_repository_any": 10, "data_repository_any_pct": 4.7, "data_cite_or_link_any": 62, "data_cite_or_link_any_pct": 29.0}, {"group": "Ukraine", "display_group": "Ukraine", "n": 214, "code_yes": 6, "code_yes_pct": 2.8, "code_no": 208, "code_no_pct": 97.2, "data_available": 11, "data_available_pct": 5.1, "data_cite": 65, "data_cite_pct": 30.4, "data_both": 1, "data_both_pct": 0.5, "data_none": 137, "data_none_pct": 64.0, "data_repository_any": 12, "data_repository_any_pct": 5.6, "data_cite_or_link_any": 66, "data_cite_or_link_any_pct": 30.8}, {"group": "France", "display_group": "France", "n": 193, "code_yes": 18, "code_yes_pct": 9.3, "code_no": 175, "code_no_pct": 90.7, "data_available": 9, "data_available_pct": 4.7, "data_cite": 34, "data_cite_pct": 17.6, "data_both": 5, "data_both_pct": 2.6, "data_none": 145, "data_none_pct": 75.1, "data_repository_any": 14, "data_repository_any_pct": 7.3, "data_cite_or_link_any": 39, "data_cite_or_link_any_pct": 20.2}, {"group": "India", "display_group": "India", "n": 188, "code_yes": 4, "code_yes_pct": 2.1, "code_no": 184, "code_no_pct": 97.9, "data_available": 1, "data_available_pct": 0.5, "data_cite": 47, "data_cite_pct": 25.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 140, "data_none_pct": 74.5, "data_repository_any": 1, "data_repository_any_pct": 0.5, "data_cite_or_link_any": 47, "data_cite_or_link_any_pct": 25.0}, {"group": "Spain", "display_group": "Spain", "n": 187, "code_yes": 11, "code_yes_pct": 5.9, "code_no": 176, "code_no_pct": 94.1, "data_available": 5, "data_available_pct": 2.7, "data_cite": 68, "data_cite_pct": 36.4, "data_both": 2, "data_both_pct": 1.1, "data_none": 112, "data_none_pct": 59.9, "data_repository_any": 7, "data_repository_any_pct": 3.7, "data_cite_or_link_any": 70, "data_cite_or_link_any_pct": 37.4}, {"group": "Hong Kong", "display_group": "Hong Kong", "n": 186, "code_yes": 2, "code_yes_pct": 1.1, "code_no": 184, "code_no_pct": 98.9, "data_available": 0, "data_available_pct": 0.0, "data_cite": 57, "data_cite_pct": 30.6, "data_both": 1, "data_both_pct": 0.5, "data_none": 128, "data_none_pct": 68.8, "data_repository_any": 1, "data_repository_any_pct": 0.5, "data_cite_or_link_any": 58, "data_cite_or_link_any_pct": 31.2}, {"group": "Singapore", "display_group": "Singapore", "n": 180, "code_yes": 5, "code_yes_pct": 2.8, "code_no": 175, "code_no_pct": 97.2, "data_available": 2, "data_available_pct": 1.1, "data_cite": 50, "data_cite_pct": 27.8, "data_both": 0, "data_both_pct": 0.0, "data_none": 128, "data_none_pct": 71.1, "data_repository_any": 2, "data_repository_any_pct": 1.1, "data_cite_or_link_any": 50, "data_cite_or_link_any_pct": 27.8}, {"group": "Japan", "display_group": "Japan", "n": 177, "code_yes": 7, "code_yes_pct": 4.0, "code_no": 170, "code_no_pct": 96.0, "data_available": 3, "data_available_pct": 1.7, "data_cite": 41, "data_cite_pct": 23.2, "data_both": 3, "data_both_pct": 1.7, "data_none": 130, "data_none_pct": 73.4, "data_repository_any": 6, "data_repository_any_pct": 3.4, "data_cite_or_link_any": 44, "data_cite_or_link_any_pct": 24.9}, {"group": "Afghanistan", "display_group": "Afghanistan", "n": 168, "code_yes": 1, "code_yes_pct": 0.6, "code_no": 167, "code_no_pct": 99.4, "data_available": 2, "data_available_pct": 1.2, "data_cite": 49, "data_cite_pct": 29.2, "data_both": 0, "data_both_pct": 0.0, "data_none": 117, "data_none_pct": 69.6, "data_repository_any": 2, "data_repository_any_pct": 1.2, "data_cite_or_link_any": 49, "data_cite_or_link_any_pct": 29.2}, {"group": "Norway", "display_group": "Norway", "n": 141, "code_yes": 6, "code_yes_pct": 4.3, "code_no": 135, "code_no_pct": 95.7, "data_available": 2, "data_available_pct": 1.4, "data_cite": 33, "data_cite_pct": 23.4, "data_both": 1, "data_both_pct": 0.7, "data_none": 105, "data_none_pct": 74.5, "data_repository_any": 3, "data_repository_any_pct": 2.1, "data_cite_or_link_any": 34, "data_cite_or_link_any_pct": 24.1}, {"group": "Switzerland", "display_group": "Switzerland", "n": 139, "code_yes": 31, "code_yes_pct": 22.3, "code_no": 108, "code_no_pct": 77.7, "data_available": 12, "data_available_pct": 8.6, "data_cite": 43, "data_cite_pct": 30.9, "data_both": 10, "data_both_pct": 7.2, "data_none": 74, "data_none_pct": 53.2, "data_repository_any": 22, "data_repository_any_pct": 15.8, "data_cite_or_link_any": 53, "data_cite_or_link_any_pct": 38.1}, {"group": "Korea, Republic of", "display_group": "Korea, Republic of", "n": 138, "code_yes": 2, "code_yes_pct": 1.4, "code_no": 136, "code_no_pct": 98.6, "data_available": 1, "data_available_pct": 0.7, "data_cite": 42, "data_cite_pct": 30.4, "data_both": 1, "data_both_pct": 0.7, "data_none": 94, "data_none_pct": 68.1, "data_repository_any": 2, "data_repository_any_pct": 1.4, "data_cite_or_link_any": 43, "data_cite_or_link_any_pct": 31.2}, {"group": "Iran, Islamic Republic of", "display_group": "Iran, Islamic Republic of", "n": 101, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 101, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 24, "data_cite_pct": 23.8, "data_both": 0, "data_both_pct": 0.0, "data_none": 77, "data_none_pct": 76.2, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 24, "data_cite_or_link_any_pct": 23.8}, {"group": "Denmark", "display_group": "Denmark", "n": 92, "code_yes": 14, "code_yes_pct": 15.2, "code_no": 78, "code_no_pct": 84.8, "data_available": 7, "data_available_pct": 7.6, "data_cite": 31, "data_cite_pct": 33.7, "data_both": 2, "data_both_pct": 2.2, "data_none": 52, "data_none_pct": 56.5, "data_repository_any": 9, "data_repository_any_pct": 9.8, "data_cite_or_link_any": 33, "data_cite_or_link_any_pct": 35.9}, {"group": "Belgium", "display_group": "Belgium", "n": 76, "code_yes": 3, "code_yes_pct": 3.9, "code_no": 73, "code_no_pct": 96.1, "data_available": 3, "data_available_pct": 3.9, "data_cite": 20, "data_cite_pct": 26.3, "data_both": 0, "data_both_pct": 0.0, "data_none": 53, "data_none_pct": 69.7, "data_repository_any": 3, "data_repository_any_pct": 3.9, "data_cite_or_link_any": 20, "data_cite_or_link_any_pct": 26.3}, {"group": "Taiwan", "display_group": "Taiwan", "n": 74, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 74, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 23, "data_cite_pct": 31.1, "data_both": 0, "data_both_pct": 0.0, "data_none": 51, "data_none_pct": 68.9, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 23, "data_cite_or_link_any_pct": 31.1}, {"group": "Brazil", "display_group": "Brazil", "n": 70, "code_yes": 6, "code_yes_pct": 8.6, "code_no": 64, "code_no_pct": 91.4, "data_available": 1, "data_available_pct": 1.4, "data_cite": 28, "data_cite_pct": 40.0, "data_both": 2, "data_both_pct": 2.9, "data_none": 39, "data_none_pct": 55.7, "data_repository_any": 3, "data_repository_any_pct": 4.3, "data_cite_or_link_any": 30, "data_cite_or_link_any_pct": 42.9}, {"group": "Chile", "display_group": "Chile", "n": 68, "code_yes": 4, "code_yes_pct": 5.9, "code_no": 64, "code_no_pct": 94.1, "data_available": 2, "data_available_pct": 2.9, "data_cite": 12, "data_cite_pct": 17.6, "data_both": 0, "data_both_pct": 0.0, "data_none": 54, "data_none_pct": 79.4, "data_repository_any": 2, "data_repository_any_pct": 2.9, "data_cite_or_link_any": 12, "data_cite_or_link_any_pct": 17.6}, {"group": "Turkey", "display_group": "Turkey", "n": 67, "code_yes": 1, "code_yes_pct": 1.5, "code_no": 66, "code_no_pct": 98.5, "data_available": 1, "data_available_pct": 1.5, "data_cite": 12, "data_cite_pct": 17.9, "data_both": 0, "data_both_pct": 0.0, "data_none": 54, "data_none_pct": 80.6, "data_repository_any": 1, "data_repository_any_pct": 1.5, "data_cite_or_link_any": 12, "data_cite_or_link_any_pct": 17.9}, {"group": "Israel", "display_group": "Israel", "n": 61, "code_yes": 8, "code_yes_pct": 13.1, "code_no": 53, "code_no_pct": 86.9, "data_available": 1, "data_available_pct": 1.6, "data_cite": 7, "data_cite_pct": 11.5, "data_both": 1, "data_both_pct": 1.6, "data_none": 52, "data_none_pct": 85.2, "data_repository_any": 2, "data_repository_any_pct": 3.3, "data_cite_or_link_any": 8, "data_cite_or_link_any_pct": 13.1}, {"group": "Portugal", "display_group": "Portugal", "n": 60, "code_yes": 2, "code_yes_pct": 3.3, "code_no": 58, "code_no_pct": 96.7, "data_available": 0, "data_available_pct": 0.0, "data_cite": 17, "data_cite_pct": 28.3, "data_both": 0, "data_both_pct": 0.0, "data_none": 43, "data_none_pct": 71.7, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 17, "data_cite_or_link_any_pct": 28.3}, {"group": "Greece", "display_group": "Greece", "n": 54, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 54, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 15, "data_cite_pct": 27.8, "data_both": 0, "data_both_pct": 0.0, "data_none": 39, "data_none_pct": 72.2, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 15, "data_cite_or_link_any_pct": 27.8}, {"group": "New Zealand", "display_group": "New Zealand", "n": 51, "code_yes": 4, "code_yes_pct": 7.8, "code_no": 47, "code_no_pct": 92.2, "data_available": 1, "data_available_pct": 2.0, "data_cite": 14, "data_cite_pct": 27.5, "data_both": 0, "data_both_pct": 0.0, "data_none": 36, "data_none_pct": 70.6, "data_repository_any": 1, "data_repository_any_pct": 2.0, "data_cite_or_link_any": 14, "data_cite_or_link_any_pct": 27.5}, {"group": "Colombia", "display_group": "Colombia", "n": 49, "code_yes": 4, "code_yes_pct": 8.2, "code_no": 45, "code_no_pct": 91.8, "data_available": 2, "data_available_pct": 4.1, "data_cite": 12, "data_cite_pct": 24.5, "data_both": 0, "data_both_pct": 0.0, "data_none": 35, "data_none_pct": 71.4, "data_repository_any": 2, "data_repository_any_pct": 4.1, "data_cite_or_link_any": 12, "data_cite_or_link_any_pct": 24.5}, {"group": "Austria", "display_group": "Austria", "n": 45, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 45, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 17, "data_cite_pct": 37.8, "data_both": 1, "data_both_pct": 2.2, "data_none": 27, "data_none_pct": 60.0, "data_repository_any": 1, "data_repository_any_pct": 2.2, "data_cite_or_link_any": 18, "data_cite_or_link_any_pct": 40.0}, {"group": "Finland", "display_group": "Finland", "n": 45, "code_yes": 4, "code_yes_pct": 8.9, "code_no": 41, "code_no_pct": 91.1, "data_available": 2, "data_available_pct": 4.4, "data_cite": 14, "data_cite_pct": 31.1, "data_both": 1, "data_both_pct": 2.2, "data_none": 28, "data_none_pct": 62.2, "data_repository_any": 3, "data_repository_any_pct": 6.7, "data_cite_or_link_any": 15, "data_cite_or_link_any_pct": 33.3}, {"group": "Ireland", "display_group": "Ireland", "n": 37, "code_yes": 2, "code_yes_pct": 5.4, "code_no": 35, "code_no_pct": 94.6, "data_available": 0, "data_available_pct": 0.0, "data_cite": 15, "data_cite_pct": 40.5, "data_both": 1, "data_both_pct": 2.7, "data_none": 21, "data_none_pct": 56.8, "data_repository_any": 1, "data_repository_any_pct": 2.7, "data_cite_or_link_any": 16, "data_cite_or_link_any_pct": 43.2}, {"group": "Indonesia", "display_group": "Indonesia", "n": 35, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 35, "code_no_pct": 100.0, "data_available": 2, "data_available_pct": 5.7, "data_cite": 5, "data_cite_pct": 14.3, "data_both": 0, "data_both_pct": 0.0, "data_none": 28, "data_none_pct": 80.0, "data_repository_any": 2, "data_repository_any_pct": 5.7, "data_cite_or_link_any": 5, "data_cite_or_link_any_pct": 14.3}, {"group": "Poland", "display_group": "Poland", "n": 31, "code_yes": 1, "code_yes_pct": 3.2, "code_no": 30, "code_no_pct": 96.8, "data_available": 0, "data_available_pct": 0.0, "data_cite": 9, "data_cite_pct": 29.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 22, "data_none_pct": 71.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 9, "data_cite_or_link_any_pct": 29.0}, {"group": "Thailand", "display_group": "Thailand", "n": 30, "code_yes": 1, "code_yes_pct": 3.3, "code_no": 29, "code_no_pct": 96.7, "data_available": 1, "data_available_pct": 3.3, "data_cite": 10, "data_cite_pct": 33.3, "data_both": 0, "data_both_pct": 0.0, "data_none": 19, "data_none_pct": 63.3, "data_repository_any": 1, "data_repository_any_pct": 3.3, "data_cite_or_link_any": 10, "data_cite_or_link_any_pct": 33.3}, {"group": "United Arab Emirates", "display_group": "United Arab Emirates", "n": 29, "code_yes": 3, "code_yes_pct": 10.3, "code_no": 26, "code_no_pct": 89.7, "data_available": 2, "data_available_pct": 6.9, "data_cite": 8, "data_cite_pct": 27.6, "data_both": 1, "data_both_pct": 3.4, "data_none": 18, "data_none_pct": 62.1, "data_repository_any": 3, "data_repository_any_pct": 10.3, "data_cite_or_link_any": 9, "data_cite_or_link_any_pct": 31.0}, {"group": "Malaysia", "display_group": "Malaysia", "n": 21, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 21, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 4, "data_cite_pct": 19.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 17, "data_none_pct": 81.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 4, "data_cite_or_link_any_pct": 19.0}, {"group": "Hungary", "display_group": "Hungary", "n": 20, "code_yes": 1, "code_yes_pct": 5.0, "code_no": 19, "code_no_pct": 95.0, "data_available": 1, "data_available_pct": 5.0, "data_cite": 5, "data_cite_pct": 25.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 14, "data_none_pct": 70.0, "data_repository_any": 1, "data_repository_any_pct": 5.0, "data_cite_or_link_any": 5, "data_cite_or_link_any_pct": 25.0}, {"group": "Viet Nam", "display_group": "Viet Nam", "n": 18, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 18, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 5.6, "data_both": 0, "data_both_pct": 0.0, "data_none": 17, "data_none_pct": 94.4, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 5.6}, {"group": "Central African Republic", "display_group": "Central African Republic", "n": 17, "code_yes": 1, "code_yes_pct": 5.9, "code_no": 16, "code_no_pct": 94.1, "data_available": 0, "data_available_pct": 0.0, "data_cite": 8, "data_cite_pct": 47.1, "data_both": 0, "data_both_pct": 0.0, "data_none": 9, "data_none_pct": 52.9, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 8, "data_cite_or_link_any_pct": 47.1}, {"group": "Mexico", "display_group": "Mexico", "n": 17, "code_yes": 1, "code_yes_pct": 5.9, "code_no": 16, "code_no_pct": 94.1, "data_available": 0, "data_available_pct": 0.0, "data_cite": 8, "data_cite_pct": 47.1, "data_both": 0, "data_both_pct": 0.0, "data_none": 9, "data_none_pct": 52.9, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 8, "data_cite_or_link_any_pct": 47.1}, {"group": "Luxembourg", "display_group": "Luxembourg", "n": 16, "code_yes": 1, "code_yes_pct": 6.2, "code_no": 15, "code_no_pct": 93.8, "data_available": 0, "data_available_pct": 0.0, "data_cite": 4, "data_cite_pct": 25.0, "data_both": 1, "data_both_pct": 6.2, "data_none": 11, "data_none_pct": 68.8, "data_repository_any": 1, "data_repository_any_pct": 6.2, "data_cite_or_link_any": 5, "data_cite_or_link_any_pct": 31.2}, {"group": "Pakistan", "display_group": "Pakistan", "n": 15, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 15, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 4, "data_cite_pct": 26.7, "data_both": 0, "data_both_pct": 0.0, "data_none": 11, "data_none_pct": 73.3, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 4, "data_cite_or_link_any_pct": 26.7}, {"group": "Bangladesh", "display_group": "Bangladesh", "n": 14, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 14, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 4, "data_cite_pct": 28.6, "data_both": 0, "data_both_pct": 0.0, "data_none": 10, "data_none_pct": 71.4, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 4, "data_cite_or_link_any_pct": 28.6}, {"group": "Qatar", "display_group": "Qatar", "n": 14, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 14, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 2, "data_cite_pct": 14.3, "data_both": 0, "data_both_pct": 0.0, "data_none": 12, "data_none_pct": 85.7, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 2, "data_cite_or_link_any_pct": 14.3}, {"group": "South Africa", "display_group": "South Africa", "n": 13, "code_yes": 2, "code_yes_pct": 15.4, "code_no": 11, "code_no_pct": 84.6, "data_available": 1, "data_available_pct": 7.7, "data_cite": 5, "data_cite_pct": 38.5, "data_both": 0, "data_both_pct": 0.0, "data_none": 7, "data_none_pct": 53.8, "data_repository_any": 1, "data_repository_any_pct": 7.7, "data_cite_or_link_any": 5, "data_cite_or_link_any_pct": 38.5}, {"group": "Philippines", "display_group": "Philippines", "n": 12, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 12, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 4, "data_cite_pct": 33.3, "data_both": 0, "data_both_pct": 0.0, "data_none": 8, "data_none_pct": 66.7, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 4, "data_cite_or_link_any_pct": 33.3}, {"group": "Saudi Arabia", "display_group": "Saudi Arabia", "n": 12, "code_yes": 1, "code_yes_pct": 8.3, "code_no": 11, "code_no_pct": 91.7, "data_available": 0, "data_available_pct": 0.0, "data_cite": 3, "data_cite_pct": 25.0, "data_both": 1, "data_both_pct": 8.3, "data_none": 8, "data_none_pct": 66.7, "data_repository_any": 1, "data_repository_any_pct": 8.3, "data_cite_or_link_any": 4, "data_cite_or_link_any_pct": 33.3}, {"group": "Argentina", "display_group": "Argentina", "n": 11, "code_yes": 1, "code_yes_pct": 9.1, "code_no": 10, "code_no_pct": 90.9, "data_available": 0, "data_available_pct": 0.0, "data_cite": 2, "data_cite_pct": 18.2, "data_both": 1, "data_both_pct": 9.1, "data_none": 8, "data_none_pct": 72.7, "data_repository_any": 1, "data_repository_any_pct": 9.1, "data_cite_or_link_any": 3, "data_cite_or_link_any_pct": 27.3}, {"group": "Ghana", "display_group": "Ghana", "n": 11, "code_yes": 1, "code_yes_pct": 9.1, "code_no": 10, "code_no_pct": 90.9, "data_available": 0, "data_available_pct": 0.0, "data_cite": 3, "data_cite_pct": 27.3, "data_both": 0, "data_both_pct": 0.0, "data_none": 8, "data_none_pct": 72.7, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 3, "data_cite_or_link_any_pct": 27.3}, {"group": "Lebanon", "display_group": "Lebanon", "n": 10, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 10, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 10, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Cyprus", "display_group": "Cyprus", "n": 8, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 8, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 2, "data_cite_pct": 25.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 6, "data_none_pct": 75.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 2, "data_cite_or_link_any_pct": 25.0}, {"group": "Serbia", "display_group": "Serbia", "n": 8, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 8, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 12.5, "data_both": 0, "data_both_pct": 0.0, "data_none": 7, "data_none_pct": 87.5, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 12.5}, {"group": "Croatia", "display_group": "Croatia", "n": 7, "code_yes": 1, "code_yes_pct": 14.3, "code_no": 6, "code_no_pct": 85.7, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 14.3, "data_both": 0, "data_both_pct": 0.0, "data_none": 6, "data_none_pct": 85.7, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 14.3}, {"group": "Nigeria", "display_group": "Nigeria", "n": 7, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 7, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 14.3, "data_both": 0, "data_both_pct": 0.0, "data_none": 6, "data_none_pct": 85.7, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 14.3}, {"group": "Morocco", "display_group": "Morocco", "n": 6, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 6, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 3, "data_cite_pct": 50.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 3, "data_none_pct": 50.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 3, "data_cite_or_link_any_pct": 50.0}, {"group": "Türkiye", "display_group": "Türkiye", "n": 6, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 6, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 4, "data_cite_pct": 66.7, "data_both": 0, "data_both_pct": 0.0, "data_none": 2, "data_none_pct": 33.3, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 4, "data_cite_or_link_any_pct": 66.7}, {"group": "Ecuador", "display_group": "Ecuador", "n": 5, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 5, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 2, "data_cite_pct": 40.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 3, "data_none_pct": 60.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 2, "data_cite_or_link_any_pct": 40.0}, {"group": "Egypt", "display_group": "Egypt", "n": 5, "code_yes": 1, "code_yes_pct": 20.0, "code_no": 4, "code_no_pct": 80.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 20.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 4, "data_none_pct": 80.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 20.0}, {"group": "Macao", "display_group": "Macao", "n": 5, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 5, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 2, "data_cite_pct": 40.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 3, "data_none_pct": 60.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 2, "data_cite_or_link_any_pct": 40.0}, {"group": "Romania", "display_group": "Romania", "n": 5, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 5, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 20.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 4, "data_none_pct": 80.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 20.0}, {"group": "Jordan", "display_group": "Jordan", "n": 4, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 4, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 25.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 3, "data_none_pct": 75.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 25.0}, {"group": "Russian Federation", "display_group": "Russian Federation", "n": 4, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 4, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 25.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 3, "data_none_pct": 75.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 25.0}, {"group": "Kuwait", "display_group": "Kuwait", "n": 3, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 3, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 3, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Lithuania", "display_group": "Lithuania", "n": 3, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 3, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 3, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Nepal", "display_group": "Nepal", "n": 3, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 3, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 33.3, "data_both": 0, "data_both_pct": 0.0, "data_none": 2, "data_none_pct": 66.7, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 33.3}, {"group": "Slovenia", "display_group": "Slovenia", "n": 3, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 3, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 3, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Uganda", "display_group": "Uganda", "n": 3, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 3, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 33.3, "data_both": 0, "data_both_pct": 0.0, "data_none": 2, "data_none_pct": 66.7, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 33.3}, {"group": "Algeria", "display_group": "Algeria", "n": 2, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 2, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 2, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Costa Rica", "display_group": "Costa Rica", "n": 2, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 2, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 2, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Czechia", "display_group": "Czechia", "n": 2, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 2, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 50.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 1, "data_none_pct": 50.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 50.0}, {"group": "Estonia", "display_group": "Estonia", "n": 2, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 2, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 2, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Kazakhstan", "display_group": "Kazakhstan", "n": 2, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 2, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 50.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 1, "data_none_pct": 50.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 50.0}, {"group": "Lao People's Democratic Republic", "display_group": "Lao People's Democratic Republic", "n": 2, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 2, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 2, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Malta", "display_group": "Malta", "n": 2, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 2, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 50.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 1, "data_none_pct": 50.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 50.0}, {"group": "Oman", "display_group": "Oman", "n": 2, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 2, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 2, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Peru", "display_group": "Peru", "n": 2, "code_yes": 1, "code_yes_pct": 50.0, "code_no": 1, "code_no_pct": 50.0, "data_available": 1, "data_available_pct": 50.0, "data_cite": 1, "data_cite_pct": 50.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 0, "data_none_pct": 0.0, "data_repository_any": 1, "data_repository_any_pct": 50.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 50.0}, {"group": "Puerto Rico", "display_group": "Puerto Rico", "n": 2, "code_yes": 1, "code_yes_pct": 50.0, "code_no": 1, "code_no_pct": 50.0, "data_available": 1, "data_available_pct": 50.0, "data_cite": 1, "data_cite_pct": 50.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 0, "data_none_pct": 0.0, "data_repository_any": 1, "data_repository_any_pct": 50.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 50.0}, {"group": "Slovakia", "display_group": "Slovakia", "n": 2, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 2, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 2, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Sri Lanka", "display_group": "Sri Lanka", "n": 2, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 2, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 2, "data_cite_pct": 100.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 0, "data_none_pct": 0.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 2, "data_cite_or_link_any_pct": 100.0}, {"group": "Tanzania, United Republic of", "display_group": "Tanzania, United Republic of", "n": 2, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 2, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 50.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 1, "data_none_pct": 50.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 50.0}, {"group": "Bahrain", "display_group": "Bahrain", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 1, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Belarus", "display_group": "Belarus", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 100.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 0, "data_none_pct": 0.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 100.0}, {"group": "Benin", "display_group": "Benin", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 100.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 0, "data_none_pct": 0.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 100.0}, {"group": "Bulgaria", "display_group": "Bulgaria", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 1, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Cabo Verde", "display_group": "Cabo Verde", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 100.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 0, "data_none_pct": 0.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 100.0}, {"group": "Congo, The Democratic Republic of the", "display_group": "Congo, The Democratic Republic of the", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 1, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Ethiopia", "display_group": "Ethiopia", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 1, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Fiji", "display_group": "Fiji", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 1, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Guyana", "display_group": "Guyana", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 1, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Honduras", "display_group": "Honduras", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 1, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Iraq", "display_group": "Iraq", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 100.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 0, "data_none_pct": 0.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 100.0}, {"group": "Kenya", "display_group": "Kenya", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 100.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 0, "data_none_pct": 0.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 100.0}, {"group": "Kosovo", "display_group": "Kosovo", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 1, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Libya", "display_group": "Libya", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 100.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 0, "data_none_pct": 0.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 100.0}, {"group": "Mauritius", "display_group": "Mauritius", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 100.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 0, "data_none_pct": 0.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 100.0}, {"group": "Palestine, State of", "display_group": "Palestine, State of", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 0, "data_cite_pct": 0.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 1, "data_none_pct": 100.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 0, "data_cite_or_link_any_pct": 0.0}, {"group": "Russia", "display_group": "Russia", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 100.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 0, "data_none_pct": 0.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 100.0}, {"group": "Tunisia", "display_group": "Tunisia", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 100.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 0, "data_none_pct": 0.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 100.0}, {"group": "Uruguay", "display_group": "Uruguay", "n": 1, "code_yes": 0, "code_yes_pct": 0.0, "code_no": 1, "code_no_pct": 100.0, "data_available": 0, "data_available_pct": 0.0, "data_cite": 1, "data_cite_pct": 100.0, "data_both": 0, "data_both_pct": 0.0, "data_none": 0, "data_none_pct": 0.0, "data_repository_any": 0, "data_repository_any_pct": 0.0, "data_cite_or_link_any": 1, "data_cite_or_link_any_pct": 100.0}]}};
+    const GROUP_META = {"topic": {"title": "Topic", "defaultLimit": 0, "csv": "data/stats_summary_by_topic.csv"}, "journal": {"title": "Journal", "defaultLimit": 0, "csv": "data/stats_summary_by_journal.csv"}, "primary_region": {"title": "Primary Region", "defaultLimit": 25, "csv": "data/stats_summary_by_primary_region.csv"}};
+    const CODE_CATEGORIES = ["yes", "no"];
+    const DATA_CATEGORIES = ["available", "cite", "both", "none"];
+    const CODE_COLORS = {"yes": "#2B7A9B", "no": "#D8D1C8"};
+    const DATA_COLORS = {"available": "#2B7A9B", "cite": "#C98A3A", "both": "#4B8F55", "none": "#D8D1C8"};
+    const CODE_LABELS = {"yes": "yes", "no": "no"};
+    const DATA_LABELS = {"available": "repository only", "cite": "cite/link only", "both": "both", "none": "none"};
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, function(char) {
+        return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[char];
+      });
+    }
+
+    function percent(count, total) {
+      return total ? Math.round((count / total * 100) * 10) / 10 : 0;
+    }
+
+    function shortLabel(value, maxLength = 34) {
+      const text = String(value ?? "");
+      return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+    }
+
+    function sortRows(rows, metric, direction) {
+      const multiplier = direction === "asc" ? 1 : -1;
+      return rows.slice().sort((a, b) => {
+        if (metric === "group") {
+          return a.display_group.localeCompare(b.display_group) * multiplier;
+        }
+        const diff = (Number(a[metric]) || 0) - (Number(b[metric]) || 0);
+        if (diff !== 0) return diff * multiplier;
+        return a.display_group.localeCompare(b.display_group);
+      });
+    }
+
+    function isLightColor(hexColor) {
+      const hex = String(hexColor || "").replace("#", "");
+      if (hex.length !== 6) return false;
+      const red = parseInt(hex.slice(0, 2), 16);
+      const green = parseInt(hex.slice(2, 4), 16);
+      const blue = parseInt(hex.slice(4, 6), 16);
+      const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+      return luminance > 0.62;
+    }
+
+    function chartSvg(rows, categories, colors, labels, prefix, title) {
+      const rowHeight = 36;
+      const leftWidth = 292;
+      const barWidth = 520;
+      const rightWidth = 88;
+      const top = 58;
+      const bottom = 52;
+      const width = leftWidth + barWidth + rightWidth;
+      const height = top + bottom + rowHeight * rows.length;
+      let svg = `<svg class="availability-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(title)}">`;
+      svg += `<text x="0" y="18" class="chart-title">${escapeHtml(title)}</text>`;
+      svg += `<text x="${leftWidth}" y="18" class="axis-label">Share of articles</text>`;
+
+      [0, 25, 50, 75, 100].forEach((tick) => {
+        const x = leftWidth + barWidth * tick / 100;
+        svg += `<line x1="${x.toFixed(2)}" y1="${top - 8}" x2="${x.toFixed(2)}" y2="${top + rowHeight * rows.length - 6}" class="axis-grid"></line>`;
+        svg += `<text x="${x.toFixed(2)}" y="${top - 16}" text-anchor="middle" class="axis-label">${tick}%</text>`;
+      });
+
+      rows.forEach((row, index) => {
+        const y = top + index * rowHeight;
+        const total = Number(row.n) || 0;
+        svg += `<text x="0" y="${y + 22}" class="chart-label">${escapeHtml(shortLabel(row.display_group))}<title>${escapeHtml(row.group)}</title></text>`;
+        svg += `<rect x="${leftWidth}" y="${y + 7}" width="${barWidth}" height="20" rx="5" class="bar-bg"></rect>`;
+        let x = leftWidth;
+        categories.forEach((category) => {
+          const value = Number(row[`${prefix}_${category}`]) || 0;
+          const segmentWidth = total ? barWidth * value / total : 0;
+          if (segmentWidth > 0) {
+            const pct = percent(value, total);
+            const groupDetail = row.display_group === row.group ? row.group : `${row.display_group} (${row.group})`;
+            const categoryLabel = labels[category] || category;
+            const tooltip = `${groupDetail}: ${categoryLabel} = ${value.toLocaleString()} articles (${pct}%)`;
+            svg += `<rect x="${x.toFixed(2)}" y="${y + 7}" width="${segmentWidth.toFixed(2)}" height="20" fill="${colors[category]}" class="chart-segment" data-tooltip="${escapeHtml(tooltip)}"><title>${escapeHtml(tooltip)}</title></rect>`;
+            if (segmentWidth > 40) {
+              const percentClass = isLightColor(colors[category]) ? "chart-percent is-dark" : "chart-percent";
+              svg += `<text x="${(x + segmentWidth / 2).toFixed(2)}" y="${y + 21}" text-anchor="middle" class="${percentClass}">${pct}%</text>`;
+            }
+          }
+          x += segmentWidth;
+        });
+        svg += `<text x="${leftWidth + barWidth + 14}" y="${y + 22}" class="chart-n">n=${total.toLocaleString()}</text>`;
+      });
+
+      let legendX = leftWidth;
+      const legendY = height - 18;
+      categories.forEach((category) => {
+        svg += `<rect x="${legendX}" y="${legendY - 10}" width="10" height="10" fill="${colors[category]}"></rect>`;
+        svg += `<text x="${legendX + 16}" y="${legendY}" class="legend-label">${escapeHtml(labels[category] || category)}</text>`;
+        legendX += 122;
+      });
+      svg += "</svg>";
+      return svg;
+    }
+
+    function dataCategoryOrder(sortMetric) {
+      if (["data_cite_or_link_any_pct", "data_cite_pct"].includes(sortMetric)) {
+        return ["cite", "both", "available", "none"];
+      }
+      return ["available", "both", "cite", "none"];
+    }
+
+    function renderSection(section) {
+      const slug = section.dataset.section;
+      const meta = GROUP_META[slug];
+      const dataSortMetric = section.querySelector('[data-control="data-sort"]').value;
+      const dataDirection = section.querySelector('[data-control="data-direction"]').value;
+      const codeSortMetric = section.querySelector('[data-control="code-sort"]').value;
+      const codeDirection = section.querySelector('[data-control="code-direction"]').value;
+      const limitValue = Number(meta.defaultLimit) || 0;
+      const rows = STATS_DATA.groups[slug] || [];
+      const dataSorted = sortRows(rows, dataSortMetric, dataDirection);
+      const codeSorted = sortRows(rows, codeSortMetric, codeDirection);
+      const dataShown = limitValue > 0 ? dataSorted.slice(0, limitValue) : dataSorted;
+      const codeShown = limitValue > 0 ? codeSorted.slice(0, limitValue) : codeSorted;
+      section.querySelector('[data-role="data-chart"]').innerHTML = chartSvg(dataShown, dataCategoryOrder(dataSortMetric), DATA_COLORS, DATA_LABELS, "data", `Data availability by ${meta.title}`);
+      section.querySelector('[data-role="code-chart"]').innerHTML = chartSvg(codeShown, CODE_CATEGORIES, CODE_COLORS, CODE_LABELS, "code", `Code availability by ${meta.title}`);
+    }
+
+    function applyViewPreferences() {
+      const selectedSection = document.querySelector("[data-group-select]")?.value;
+      const selectedView = document.querySelector("[data-chart-select]")?.value;
+      document.querySelectorAll("[data-section]").forEach((section) => {
+        const sectionVisible = section.dataset.section === selectedSection;
+        section.classList.toggle("is-hidden", !sectionVisible);
+        section.querySelectorAll("[data-view]").forEach((view) => {
+          view.classList.toggle("is-hidden", view.dataset.view !== selectedView);
+        });
+      });
+    }
+
+    document.querySelectorAll("[data-section]").forEach((section) => {
+      section.querySelectorAll('[data-control$="-sort"], [data-control$="-direction"]').forEach((control) => {
+        control.addEventListener("change", () => renderSection(section));
+      });
+      renderSection(section);
+    });
+    document.querySelectorAll("[data-group-select], [data-chart-select]").forEach((input) => {
+      input.addEventListener("change", applyViewPreferences);
+    });
+    const tooltip = document.querySelector('[data-role="chart-tooltip"]');
+    document.addEventListener("mousemove", (event) => {
+      if (!tooltip || !tooltip.classList.contains("is-visible")) return;
+      tooltip.style.left = `${event.clientX + 12}px`;
+      tooltip.style.top = `${event.clientY + 12}px`;
+    });
+    document.addEventListener("mouseover", (event) => {
+      const segment = event.target.closest?.(".chart-segment");
+      if (!tooltip || !segment) return;
+      tooltip.textContent = segment.dataset.tooltip || "";
+      tooltip.style.left = `${event.clientX + 12}px`;
+      tooltip.style.top = `${event.clientY + 12}px`;
+      tooltip.classList.add("is-visible");
+    });
+    document.addEventListener("mouseout", (event) => {
+      if (!tooltip || !event.target.closest?.(".chart-segment")) return;
+      tooltip.classList.remove("is-visible");
+    });
+    applyViewPreferences();
+  </script>
+</body>
+</html>
