@@ -41,6 +41,36 @@
         text-decoration: none;
         color: var(--primary-color);
     }
+    .blog-content table {
+      width: 100%;
+      display: block;
+      overflow-x: auto;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+    }
+    .blog-content th, .blog-content td {
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid #e8e8e8;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .blog-content thead th {
+      background-color: #f7f7f7;
+      font-weight: 600;
+      border-bottom: 2px solid #d8d8d8;
+    }
+    .blog-content tbody tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+    .blog-content tbody tr:last-child td {
+      border-bottom: none;
+    }
+    .blog-content table code {
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
