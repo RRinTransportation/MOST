@@ -34,6 +34,7 @@ GROUPS = (
     ("journal", "journal", "Journal", None),
     ("primary_region", "clean_primary_region", "Primary Region", 25),
 )
+DEFAULT_GROUP = "journal"
 
 DATA_COLORS = {
     "available": "#2B7A9B",
@@ -367,7 +368,7 @@ def render_html(summary: dict[str, object]) -> str:
         )
 
     grouping_options = "\n".join(
-        f'          <option value="{html.escape(slug)}">{html.escape(title)}</option>'
+        f'          <option value="{html.escape(slug)}"{" selected" if slug == DEFAULT_GROUP else ""}>{html.escape(title)}</option>'
         for slug, _field, title, _limit in GROUPS
     )
     view_controls = f"""
