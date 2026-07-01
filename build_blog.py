@@ -52,7 +52,7 @@ def build_blog():
             metadata, body = parse_frontmatter(content)
             
             # Convert Markdown to HTML
-            html_content = markdown.markdown(body)
+            html_content = markdown.markdown(body, extensions=['tables'])
             
             # Prepare context for template
             context = metadata.copy()
