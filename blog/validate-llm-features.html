@@ -41,6 +41,36 @@
         text-decoration: none;
         color: var(--primary-color);
     }
+    .blog-content table {
+      width: 100%;
+      display: block;
+      overflow-x: auto;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+    }
+    .blog-content th, .blog-content td {
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid #e8e8e8;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .blog-content thead th {
+      background-color: #f7f7f7;
+      font-weight: 600;
+      border-bottom: 2px solid #d8d8d8;
+    }
+    .blog-content tbody tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+    .blog-content tbody tr:last-child td {
+      border-bottom: none;
+    }
+    .blog-content table code {
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
@@ -75,7 +105,7 @@
             </header>
             <div class="blog-content">
                 <p>The main concerns about LLM for feature extraction come from the trust. We want to make sure the features extracted by LLM are useful for downstream tasks.</p>
-<p>To build that trust, we built a Manual Validation Dataset (MVD) of 96 randomly selected papers. Each paper was independently labeled by two human experts (H1, H2) and by our LLM pipeline, on features such as whether the paper shares a public code repository (<code>is_code_publicly_available</code>). We then measured how well the three "raters" agree with each other. This blog walks through the two statistics we used, Cohen's kappa and Fleiss's kappa, with worked examples built from our own validation data. All numbers below are checked against the results table in the paper <a href="#ref-3">[3]</a>.</p>
+<p>To build that trust, we built a Manual Validation Dataset (MVD) of 96 randomly selected papers. Each paper was independently labeled by two human experts (H1, H2) and by our LLM pipeline, on features such as whether the paper shares a public code repository (<code>is_code_publicly_available</code>). We then measured how well the three "raters" agree with each other. This blog walks through the two statistics we used, Cohen's kappa and Fleiss's kappa. For each one, we first work through a small toy example to build intuition, then apply the exact same steps to our own validation data. All numbers below are checked against the results reported in the paper <a href="#ref-3">[3]</a>.</p>
 <h2>Method: Inter-rater agreement analysis</h2>
 <p>In general, inter-rater agreement analysis is a common method to evaluate the reliability of qualitative data. It measures the degree of agreement between two or more raters who independently classify items into categories. In this study, we use Cohen's kappa and Fleiss's kappa to evaluate the agreement between the features extracted by LLM and the features extracted by human annotators.</p>
 <h3>Cohen's Kappa</h3>
@@ -87,7 +117,45 @@ $$</p>
 <p>$$
 p_e = p_1 p_2 + (1-p_1)(1-p_2).
 $$</p>
-<p><strong>Worked example.</strong> In the MVD, for the feature <code>is_code_publicly_available</code>, H1 marked 8 of the 96 papers as sharing code, and H2 marked 5 of the 96 papers. We can reconstruct the 2×2 table behind these numbers that is consistent with the percentage agreement and Cohen's $\kappa$ we report for H1 vs. H2 in the paper:</p>
+<p><strong>Toy example.</strong> Suppose two reviewers, A and B, each read the same 10 short reviews and mark whether each one is "Positive" or "Negative":</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>B: Positive</th>
+<th>B: Negative</th>
+<th>Row total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A: Positive</strong></td>
+<td>5</td>
+<td>1</td>
+<td>6</td>
+</tr>
+<tr>
+<td><strong>A: Negative</strong></td>
+<td>1</td>
+<td>3</td>
+<td>4</td>
+</tr>
+<tr>
+<td><strong>Column total</strong></td>
+<td>6</td>
+<td>4</td>
+<td>10</td>
+</tr>
+</tbody>
+</table>
+<p>$$
+p_o = \frac{5+3}{10} = 0.80, \qquad p_e = \frac{6}{10}\cdot\frac{6}{10} + \frac{4}{10}\cdot\frac{4}{10} = 0.52
+$$</p>
+<p>$$
+\kappa = \frac{0.80 - 0.52}{1 - 0.52} \approx 0.583
+$$</p>
+<p>By the Landis &amp; Koch scale <a href="#ref-2">[2]</a>, $\kappa \approx 0.58$ is <strong>Moderate</strong> agreement: better than chance, but the two reviewers still disagree on 2 of the 10 reviews.</p>
+<p><strong>Applying it to our data.</strong> In the MVD, for the feature <code>is_code_publicly_available</code>, H1 marked 8 of the 96 papers as sharing code, and H2 marked 5 of the 96 papers. We can reconstruct the 2×2 table behind these numbers that is consistent with the percentage agreement and Cohen's $\kappa$ we report for H1 vs. H2 in the paper:</p>
 <table>
 <thead>
 <tr>
@@ -118,14 +186,13 @@ $$</p>
 </tr>
 </tbody>
 </table>
-<p>From this table:</p>
 <p>$$
 p_o = \frac{5+88}{96} = 0.969, \qquad p_e = \frac{8}{96}\cdot\frac{5}{96} + \frac{88}{96}\cdot\frac{91}{96} = 0.873
 $$</p>
 <p>$$
 \kappa = \frac{0.969 - 0.873}{1 - 0.873} \approx 0.753
 $$</p>
-<p>This matches the Cohen's $\kappa$ (H1 vs. H2) of 0.753 reported for <code>is_code_publicly_available</code>, which the Landis &amp; Koch scale <a href="#ref-2">[2]</a> classifies as <strong>Substantial</strong> agreement. Doing the same exercise for H1 vs. our LLM pipeline gives an even tighter table (7, 1, 0, 88), which works out to $\kappa \approx 0.928$, that is, the LLM agreed with H1 more consistently than H2 did.</p>
+<p>This matches the Cohen's $\kappa$ (H1 vs. H2) of 0.753 reported for <code>is_code_publicly_available</code>, which the Landis &amp; Koch scale classifies as <strong>Substantial</strong> agreement. Doing the same exercise for H1 vs. our LLM pipeline gives an even tighter table (7, 1, 0, 88), which works out to $\kappa \approx 0.928$, that is, the LLM agreed with H1 more consistently than H2 did.</p>
 <h3>Fleiss's Kappa</h3>
 <p>Cohen's kappa only handles two raters. Since our study has three raters per paper (H1, H2, and the LLM), we use Fleiss's kappa <a href="#ref-4">[4]</a>, which generalizes the same idea to any number of raters and categories.</p>
 <p>For $N$ subjects (papers), $n$ raters per subject, and $k$ categories, let $n_{ij}$ be the number of raters who assigned subject $i$ to category $j$. The observed agreement for subject $i$ is the fraction of rater <em>pairs</em> who agree on that subject:</p>
@@ -136,7 +203,50 @@ $$</p>
 <p>$$
 \bar{P}_e = \sum_{j=1}^{k} p_j^2, \qquad \kappa = \frac{\bar{P} - \bar{P}_e}{1 - \bar{P}_e}
 $$</p>
-<p><strong>Worked example.</strong> Extending the same feature (<code>is_code_publicly_available</code>) to all three raters, the 96 papers split into four groups by how many of the three raters said "Yes":</p>
+<p><strong>Toy example.</strong> Bring in a third reviewer, C, to label the same 10 reviews as Positive or Negative. Instead of a 2×2 table, we now just count how many of the 3 reviewers said "Positive" on each review:</p>
+<table>
+<thead>
+<tr>
+<th>Votes for "Positive" (out of 3 reviewers)</th>
+<th>Number of reviews</th>
+<th>$P_i$</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3 (all three agree: Positive)</td>
+<td>4</td>
+<td>1.000</td>
+</tr>
+<tr>
+<td>2 (two of three say Positive)</td>
+<td>2</td>
+<td>0.333</td>
+</tr>
+<tr>
+<td>1 (one of three says Positive)</td>
+<td>1</td>
+<td>0.333</td>
+</tr>
+<tr>
+<td>0 (all three agree: Negative)</td>
+<td>3</td>
+<td>1.000</td>
+</tr>
+</tbody>
+</table>
+<p>$$
+\bar{P} = \frac{4(1) + 2(0.333) + 1(0.333) + 3(1)}{10} = \frac{8}{10} = 0.80
+$$</p>
+<p>Across the $10 \times 3 = 30$ total ratings, 17 were "Positive," so $p_{\text{pos}} \approx 0.567$ and $p_{\text{neg}} \approx 0.433$:</p>
+<p>$$
+\bar{P}_e = 0.567^2 + 0.433^2 \approx 0.509
+$$</p>
+<p>$$
+\kappa = \frac{0.80 - 0.509}{1 - 0.509} \approx 0.593
+$$</p>
+<p>Just like the two-rater case, $\kappa \approx 0.59$ falls in the <strong>Moderate</strong> band: adding a third, disagreeing reviewer on 3 of the 10 reviews pulled the three-way agreement down slightly from the pairwise numbers we'd see between any two of A, B, and C alone.</p>
+<p><strong>Applying it to our data.</strong> Extending the same feature (<code>is_code_publicly_available</code>) to all three raters, the 96 papers split into four groups by how many of the three raters said "Yes":</p>
 <table>
 <thead>
 <tr>
@@ -244,7 +354,7 @@ $$</p>
 <h3>References</h3>
 <p><a id="ref-1"></a>[1] McHugh, M. L. (2012). Interrater reliability: the kappa statistic. Biochemia medica, 22(3), 276-282.</p>
 <p><a id="ref-2"></a>[2] Landis, J. R., &amp; Koch, G. G. (1977). The measurement of observer agreement for categorical data. Biometrics, 33(1), 159-174.</p>
-<p><a id="ref-3"></a>[3] Ji, J., Lu, R., Belkessa, L., Wang, L., Varotto, S., Dong, Y., Saunier, N., Ameli, M., Macfarlane, G. S., Madadi, B., &amp; Wu, C. (2026). Measuring the State of Open Science in Transportation Using Large Language Models. Preprint submitted to Transportation Research Part C.</p>
+<p><a id="ref-3"></a>[3] Ji, J., Lu, R., Belkessa, L., Wang, L., Varotto, S., Dong, Y., Saunier, N., Ameli, M., Macfarlane, G. S., Madadi, B., &amp; Wu, C. (2026). Measuring the State of Open Science in Transportation Using Large Language Models. arXiv preprint arXiv:2601.14429.</p>
 <p><a id="ref-4"></a>[4] Fleiss, J. L. (1971). Measuring nominal scale agreement among many raters. Psychological Bulletin, 76(5), 378-382.</p>
             </div>
         </article>
