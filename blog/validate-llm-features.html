@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>How do we validate the features extracted by the LLM? - MOST Blog</title>
   <link rel="stylesheet" href="https://www.rerite.org/MOST/mostyles.css">
+  <!-- RERITE_SHARED_STYLES:START -->
+  <link rel="stylesheet" href="../assets/rerite/rerite-base.css">
+  <link rel="stylesheet" href="../assets/rerite/rerite-navbar.css">
+  <!-- RERITE_SHARED_STYLES:END -->
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <script>
@@ -75,23 +79,117 @@
 </head>
 <body>
 
+<!-- RERITE_SHARED_NAV:START -->
 <nav class="navbar">
   <div class="container">
-    <a class="navbar-brand" href="../index.html" aria-label="Home">
-       <!-- Assuming logo is at /images/logo_png.png, so from blog/ it is ../images/logo_png.png -->
-      <img src="../images/logo_png.png" alt="RERITE Logo">
+    <a class="navbar-brand" href="/index.html" aria-label="RERITE home">
+      <span class="navbar-brand-mark logo-signal--animate">
+        <img src="/images/logo_png.png" width="2115" height="606" alt="" />
+        <span class="logo-signal-light logo-signal-light--red" aria-hidden="true"></span>
+        <span class="logo-signal-light logo-signal-light--amber" aria-hidden="true"></span>
+        <span class="logo-signal-light logo-signal-light--green" aria-hidden="true"></span>
+      </span>
     </a>
-    <button class="navbar-toggle" aria-label="Toggle navigation" aria-expanded="false">
-      <span></span>
-      <span></span>
-      <span></span>
+    <button class="navbar-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="primary-navigation">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
     </button>
-    <ul class="navbar-nav">
-      <li><a class="nav-link" href="../index.html">Home</a></li>
-      <li><a class="nav-link" href="index.html">Blog</a></li>
+    <ul class="navbar-nav" id="primary-navigation">
+      <li><a class="nav-link" href="/index.html">Home</a></li>
+      <li><a class="nav-link" href="/about.html">About</a></li>
+      <li><a class="nav-link" href="/team.html">Team</a></li>
+      <li><a class="nav-link" href="/activities.html">Activities</a></li>
+      <li><a class="nav-link" href="/newsletter.html">Newsletter</a></li>
+      <li class="nav-item dropdown">
+        <button class="nav-link dropdown-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="resources-menu">Resources</button>
+        <div class="dropdown-menu" id="resources-menu">
+          <div class="dropdown-container">
+            <p class="dropdown-section-label">Collections</p>
+            <a class="dropdown-item" href="/awesome-rerite.html">Open datasets and tools</a>
+            <a class="dropdown-item" href="/MOST/">Open science explorer</a>
+            <a class="dropdown-item" href="/itsc24-rr-tutorial/">Tutorial (2024)</a>
+          </div>
+        </div>
+      </li>
+      <li><a class="nav-link" href="/getinvolved.html">Get Involved</a></li>
+      <li><a class="nav-link" href="https://groups.google.com/g/rerite/">Subscribe</a></li>
     </ul>
   </div>
 </nav>
+
+<script>
+  (function() {
+    const navbar = document.querySelector('.navbar');
+    const toggle = navbar?.querySelector('.navbar-toggle');
+    const navList = navbar?.querySelector('.navbar-nav');
+    const dropdown = navbar?.querySelector('.dropdown');
+    const dropdownToggle = navbar?.querySelector('.dropdown-toggle');
+    const mobileBreakpoint = 992;
+
+    if (!navbar || !toggle || !navList) {
+      return;
+    }
+
+    const closeDropdown = () => {
+      dropdown?.classList.remove('dropdown--open');
+      dropdownToggle?.setAttribute('aria-expanded', 'false');
+    };
+
+    const closeMenu = (restoreFocus = false) => {
+      navbar.classList.remove('navbar--open');
+      toggle.setAttribute('aria-expanded', 'false');
+      closeDropdown();
+
+      if (restoreFocus) {
+        toggle.focus();
+      }
+    };
+
+    toggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const isOpen = navbar.classList.toggle('navbar--open');
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      if (!isOpen) {
+        closeDropdown();
+      }
+    });
+
+    dropdownToggle?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const isOpen = dropdown.classList.toggle('dropdown--open');
+      dropdownToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!navbar.contains(event.target)) {
+        closeMenu();
+      }
+    });
+
+    navList.addEventListener('click', (event) => {
+      if (event.target.closest('a')) {
+        closeMenu();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && navbar.classList.contains('navbar--open')) {
+        closeMenu(true);
+      } else if (event.key === 'Escape' && dropdown?.classList.contains('dropdown--open')) {
+        closeDropdown();
+        dropdownToggle?.focus();
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > mobileBreakpoint) {
+        closeMenu();
+      }
+    });
+  })();
+</script>
+<!-- RERITE_SHARED_NAV:END -->
 
 <div class="content-container">
     <main>
@@ -368,36 +466,6 @@ $$</p>
         </div>
     </footer>
 </div>
-
-<script>
-    // Navigation script reuse
-    (function() {
-      const navbar = document.querySelector('.navbar');
-      const toggle = navbar?.querySelector('.navbar-toggle');
-      const navList = navbar?.querySelector('.navbar-nav');
-
-      if (!navbar || !toggle || !navList) {
-        return;
-      }
-
-      const closeMenu = () => {
-        navbar.classList.remove('navbar--open');
-        toggle.setAttribute('aria-expanded', 'false');
-      };
-
-      toggle.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const isOpen = navbar.classList.toggle('navbar--open');
-        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      });
-
-      document.addEventListener('click', (event) => {
-        if (!navbar.contains(event.target)) {
-          closeMenu();
-        }
-      });
-    })();
-</script>
 
 </body>
 </html>

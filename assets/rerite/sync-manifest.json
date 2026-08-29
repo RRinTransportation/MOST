@@ -1,0 +1,15 @@
+{
+  "generated_sha256": {
+    "navbar.html": "14e3e6234cd9851c5a897b77aa93a7f550384d18c437757cbd11f80dfe7cf7d5",
+    "rerite-base.css": "e8af89db2113c5596fab6f7cc4b6768350cb9d15cc43c21a33775d35bda7babc",
+    "rerite-navbar.css": "f6d89dccef1791375a0eb63c701ae2671c43bfe8ab1e44519a0540823ea6b922"
+  },
+  "schema": 1,
+  "source_commit": "1551ed3e5ac0340bbd71a8d3a6aa926c45c2d3c4",
+  "source_ref": "main",
+  "source_sha256": {
+    "navbar.html": "60d762ac5ab554343793dae5532a548b782dc42e1564b7b37f548e213a0affda",
+    "styles.css": "a346fb158ebbc9fac382e6907d7bdc94b7f9059179340bd9dd88369f068ad979"
+  },
+  "upstream_repository": "RRinTransportation/RRinTransportation.github.io"
+}

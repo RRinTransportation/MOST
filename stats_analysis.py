@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parent
 DATA_PATH = ROOT / "data" / "fla_cleaned.csv"
 OUTPUT_HTML = ROOT / "stats.html"
 OUTPUT_JSON = ROOT / "data" / "stats_summary.json"
+SHARED_NAVBAR_PATH = ROOT / "assets" / "rerite" / "navbar.html"
 EXPECTED_ANALYSIS_N = 10480
 
 DATA_CATEGORIES = ("available", "cite", "both", "none")
@@ -107,6 +108,21 @@ def read_rows() -> list[dict[str, str]]:
         rows = list(csv.DictReader(f))
 
     return analysis_rows(rows)
+
+
+def shared_navbar_html() -> str:
+    """Load the vendored navbar so regenerated stats keep the shared UI."""
+    try:
+        navbar = SHARED_NAVBAR_PATH.read_text(encoding="utf-8").strip()
+    except FileNotFoundError as error:
+        raise RuntimeError(
+            "Shared RERITE assets are missing; run "
+            "`python3 sync_rerite.py --apply` before rebuilding stats."
+        ) from error
+
+    if '<nav class="navbar">' not in navbar:
+        raise RuntimeError(f"Invalid shared navbar asset: {SHARED_NAVBAR_PATH}")
+    return "\n".join(f"  {line}" if line else line for line in navbar.splitlines())
 
 
 def has_complete_availability(row: dict[str, str]) -> bool:
@@ -404,6 +420,10 @@ def render_html(summary: dict[str, object]) -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MOST Availability Stats</title>
   <link rel="stylesheet" href="mostyles.css">
+  <!-- RERITE_SHARED_STYLES:START -->
+  <link rel="stylesheet" href="assets/rerite/rerite-base.css">
+  <link rel="stylesheet" href="assets/rerite/rerite-navbar.css">
+  <!-- RERITE_SHARED_STYLES:END -->
   <style>
     .stats-hero {{
       padding: 2.4rem 1rem 1.8rem;
@@ -683,50 +703,9 @@ def render_html(summary: dict[str, object]) -> str:
   </style>
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <a class="navbar-brand" href="index.html" aria-label="Home">
-        <img src="images/logo_png.png" alt="RERITE Logo">
-      </a>
-      <button class="navbar-toggle" aria-label="Toggle navigation" aria-expanded="false">
-        <span></span><span></span><span></span>
-      </button>
-      <ul class="navbar-nav">
-        <li><a class="nav-link" href="index.html">Home</a></li>
-        <li><a class="nav-link" href="explorer.html">Explorer</a></li>
-        <li><a class="nav-link" href="stats.html">Stats</a></li>
-        <li><a class="nav-link" href="blog/index.html">Blog</a></li>
-        <li><a class="nav-link" href="https://arxiv.org/abs/2601.14429">Paper</a></li>
-      </ul>
-    </div>
-  </nav>
-
-  <script>
-    (function() {{
-      const navbar = document.querySelector('.navbar');
-      const toggle = navbar?.querySelector('.navbar-toggle');
-      const navList = navbar?.querySelector('.navbar-nav');
-      if (!navbar || !toggle || !navList) return;
-      const closeMenu = () => {{
-        navbar.classList.remove('navbar--open');
-        toggle.setAttribute('aria-expanded', 'false');
-      }};
-      toggle.addEventListener('click', (event) => {{
-        event.stopPropagation();
-        const isOpen = navbar.classList.toggle('navbar--open');
-        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      }});
-      document.addEventListener('click', (event) => {{
-        if (!navbar.contains(event.target)) closeMenu();
-      }});
-      navList.addEventListener('click', (event) => {{
-        if (event.target.closest('a')) closeMenu();
-      }});
-      window.addEventListener('resize', () => {{
-        if (window.innerWidth > 992) closeMenu();
-      }});
-    }})();
-  </script>
+  <!-- RERITE_SHARED_NAV:START -->
+__RERITE_SHARED_NAV__
+  <!-- RERITE_SHARED_NAV:END -->
 
   <header class="stats-hero">
     <h1>Availability Stats</h1>
@@ -959,6 +938,7 @@ def render_html(summary: dict[str, object]) -> str:
         .replace("__SECTIONS__", "".join(sections))
         .replace("__STATS_JSON__", stats_json)
         .replace("__GROUP_META_JSON__", meta_json)
+        .replace("__RERITE_SHARED_NAV__", shared_navbar_html())
     )
 
 
