@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Search transportation research, find open code and data, and suggest corrections to the MOST dataset.">
+  <title>Open Science Explorer · MOST</title>
+  <link rel="stylesheet" href="assets/explorer/explorer.css">
+  <script defer src="assets/explorer/explorer.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#searchInput">Skip to search</a>
+  <header class="site-header">
+    <a class="brand" href="./index.html" aria-label="MOST home"><img src="images/logo_png.png" alt="RERITE" width="132" height="38"></a>
+    <nav aria-label="Project"><a href="./index.html">About</a><a href="./stats.html">Statistics</a><a href="https://arxiv.org/abs/2601.14429" target="_blank" rel="noopener noreferrer">Study ↗</a></nav>
+  </header>
+
+  <main class="page" id="explore">
+    <div class="page-heading"><div><h1>Open Science Explorer</h1><p>Transportation research, code, and data.</p></div><span class="collection-count"><strong id="totalCount">—</strong> papers</span></div>
+
+    <section class="perspectives" aria-label="Choose your perspective">
+      <div class="role-switch" role="group" aria-label="Perspective"><button type="button" id="roleReader" aria-pressed="true">Reader</button><button type="button" id="roleAuthor" aria-pressed="false">Author</button><button type="button" id="roleEditor" aria-pressed="false">Journal editor</button></div>
+      <div class="role-actions"><button class="text-link" type="button" id="roleHint">Search papers</button><a id="editorCorrections" class="text-link" href="https://github.com/RRinTransportation/OTSM/issues" target="_blank" rel="noopener noreferrer" hidden>Journal corrections ↗</a></div>
+    </section>
+
+    <section class="filter-toolbar" aria-label="Search and filter papers">
+      <div class="search-row">
+        <div class="field search-field"><label for="searchInput">Search</label><input type="search" id="searchInput" placeholder="Paper title or keywords…" autocomplete="off"></div>
+        <div class="field scope-field"><label for="searchScope">Search in</label><select id="searchScope"><option value="all">Title + abstract</option><option value="title">Titles only</option><option value="abstract">Abstracts only</option></select></div>
+        <button type="button" id="filterToggle" class="filter-toggle" aria-expanded="false" aria-controls="filterPanel">Filters <span id="activeFilterCount"></span><span aria-hidden="true">⌄</span></button>
+        <button type="button" id="resetFilters" class="text-link reset-button">Clear filters</button>
+      </div>
+      <div id="filterPanel" class="filter-panel">
+        <div class="field" id="journalControl"><label for="journalSelect">Journal</label><select id="journalSelect"><option value="All">All journals</option></select></div>
+        <div class="field"><label for="topicSelect">Topic</label><select id="topicSelect"><option value="All">All topics</option></select></div>
+        <div class="field resource-field"><span class="field-label" id="resourceLabel">Resource</span><div class="view-switch" role="group" aria-labelledby="resourceLabel"><button type="button" id="viewCode" aria-pressed="true">Code</button><button type="button" id="viewData" aria-pressed="false">Data</button></div></div>
+        <div class="field"><label for="availabilitySelect">Availability</label><select id="availabilitySelect"><option value="All">All papers</option><option value="available">Available</option><option value="unavailable">Not found</option></select></div>
+      </div>
+    </section>
+
+    <div class="results-toolbar">
+      <div class="display-switch" role="group" aria-label="Display papers"><button type="button" id="showList" aria-pressed="true">List</button><button type="button" id="showMap" aria-pressed="false">Map</button></div>
+      <div class="result-metrics"><span><strong id="resultCount">—</strong> <span id="resultCountLabel">examples</span></span><span class="available-metric"><strong id="availableCount">—</strong> <span id="availabilityCaption">with code + data</span></span></div>
+      <button type="button" class="text-link random-button" id="randomPaper"><span aria-hidden="true">⤨</span> Random paper</button>
+    </div>
+    <p id="journalSummary" class="journal-summary" hidden></p>
+    <p id="resultSummary" class="sr-only" role="status" aria-live="polite">Loading papers…</p>
+
+    <section id="resultsPanel" aria-labelledby="listContext">
+      <h2 id="listContext" class="list-context">Papers with code and data</h2>
+      <div class="list-heading" aria-hidden="true"><span>Paper</span><span>Resources</span><span></span></div>
+      <p id="loadingNotice" class="loading-notice" role="status">Loading papers…</p>
+      <p id="emptyState" class="empty-state" hidden>No papers found. Try fewer words or clear your filters.</p>
+      <button type="button" id="retryLoad" class="button button-secondary" hidden>Try loading again</button>
+      <ul id="resultList" class="paper-list" aria-label="Paper examples and search results"></ul>
+      <button type="button" id="loadMore" class="button load-more" hidden>Show 10 more results ↓</button>
+    </section>
+
+    <section id="mapPanel" class="map-panel" aria-labelledby="mapHeading" hidden>
+      <h2 id="mapHeading" class="sr-only">Explore the research map</h2>
+      <div class="map-tools">
+        <div class="field map-topic-field"><label for="mapTopicSelect">Explore a topic</label><select id="mapTopicSelect"><option value="All">All topics</option></select></div>
+        <button type="button" id="mapAvailableOnly" class="map-availability-toggle" aria-pressed="false">Available code only</button>
+        <div class="map-navigation" role="group" aria-label="Map navigation"><button type="button" id="mapZoomIn" aria-label="Zoom in on the map">+ Zoom in</button><button type="button" id="mapZoomOut" aria-label="Zoom out on the map">− Zoom out</button><button type="button" id="mapReset">Fit results</button></div>
+        <button type="button" id="mapInteraction" class="map-gesture-toggle" aria-pressed="true">Pause map gestures</button>
+      </div>
+      <div class="map-workspace">
+        <div class="map-visual">
+          <div class="map-canvas" id="mapCanvas"><div id="plot" role="region" aria-label="Map of papers by topic similarity. Use the navigation buttons or select a paper from the paper browser." aria-describedby="mapHelp"></div><p id="plotStatus" role="status">Select Map to explore.</p></div>
+          <div class="map-caption"><p id="mapHelp">Select a point or a paper. Nearby points share similar topics.</p><div class="map-key"><span><span class="legend-star" aria-hidden="true">★</span> Available</span><span><span class="legend-circle" aria-hidden="true"></span> Not found</span></div></div>
+        </div>
+        <aside class="map-browser" aria-labelledby="mapBrowserHeading">
+          <div class="map-browser-heading"><h3 id="mapBrowserHeading">Code + data examples</h3><span id="mapPaperCount">—</span></div>
+          <section id="mapSelection" class="map-selection" aria-label="Selected paper" hidden>
+            <div class="map-selection-label"><span>Selected paper</span><button type="button" id="mapClearSelection" aria-label="Clear selected paper">×</button></div>
+            <h4 id="mapSelectedTitle"></h4><p id="mapSelectedMeta"></p><div id="mapSelectedStatus" class="paper-card__badges"></div>
+            <div class="map-selection-actions"><button type="button" id="mapOpenDetails" class="button button-secondary">Details &amp; corrections</button><button type="button" id="mapLocateSelection" class="text-link">Locate</button></div>
+          </section>
+          <p id="mapBrowseStatus" class="map-browse-status sr-only" role="status" aria-live="polite"></p>
+          <ul id="mapPaperList" class="map-paper-list" aria-label="Paper examples and search results in the current map area"></ul>
+          <button type="button" id="mapLoadMore" class="map-more" hidden>Show 10 more results</button>
+        </aside>
+      </div>
+    </section>
+
+    <footer class="page-footer">
+      <details class="guide"><summary>Help</summary><p>Start with 10 examples with recorded code and data links. Search titles or abstracts across all 10,480 papers; every word must match. Search and filters replace the examples with matching papers.</p><p>On the map, choose a topic or zoom into an area. Select a point or a listed paper to preview it. <strong>Fit results</strong> returns to all matching papers. Phone and tablet gestures start paused so you can scroll the page.</p><p>Open <strong>Details</strong> to read the abstract, visit repositories, or suggest a correction. Corrections open as public GitHub drafts and need a GitHub account. Maintainers review submissions before changes enter the dataset.</p><p>Reader, author, and editor are selectable views, not verified accounts.</p></details>
+      <details class="guide citation"><summary>Cite</summary><p>Ji et al. (2026). <a href="https://arxiv.org/abs/2601.14429" target="_blank" rel="noopener noreferrer">Measuring the State of Open Science in Transportation Using Large Language Models.</a></p><pre>@article{rerite2026most,
+  title={Measuring the State of Open Science in Transportation Using Large Language Models},
+  author={Junyi Ji and Ruth Lu and Linda Belkessa and Liming Wang and Silvia Varotto and Yongqi Dong and Nicolas Saunier and Mostafa Ameli and Gregory S. Macfarlane and Bahman Madadi and Cathy Wu},
+  year={2026},
+  journal={arXiv preprint arXiv:2601.14429},
+  url={https://arxiv.org/abs/2601.14429}
+}</pre></details>
+      <a href="https://github.com/RRinTransportation/OTSM/issues?q=is%3Aissue+%22%5BCorrection%5D%22" target="_blank" rel="noopener noreferrer">Corrections ↗</a><a href="mailto:junyi.ji@vanderbilt.edu">Contact</a>
+    </footer>
+  </main>
+
+  <dialog id="paperDialog" aria-labelledby="detailTitle">
+    <div class="dialog-top"><span class="eyebrow">PAPER DETAILS</span><button type="button" id="closeDialog" class="close-button" aria-label="Close paper details">×</button></div>
+    <h2 id="detailTitle"></h2><div id="detailMeta"></div><div id="detailBody"></div><div id="detailLinks" class="detail-links"></div>
+    <div class="correction-section"><div><h3>Something missing?</h3></div><button type="button" id="correctionToggle" class="button button-secondary" aria-expanded="false" aria-controls="correctionForm">Suggest a correction</button></div>
+    <form id="correctionForm" class="correction-form" hidden>
+      <div class="field"><label for="correctionField">What needs correcting?</label><select id="correctionField" required><option value="code_availability">Code availability</option><option value="data_availability">Data availability</option><option value="code_links">Code repository links</option><option value="data_links">Data repository links</option><option value="title">Paper title</option><option value="abstract">Abstract</option><option value="topic">Research topic</option><option value="other">Something else</option></select></div>
+      <div class="field"><label for="correctionValue">Suggested value</label><textarea id="correctionValue" rows="3" maxlength="4000" required aria-describedby="correctionHelp"></textarea><p id="correctionHelp">For availability, enter true or false. For links, enter one public HTTP(S) URL per line.</p></div>
+      <div class="field"><label for="correctionEvidence">Evidence or source</label><textarea id="correctionEvidence" rows="3" maxlength="4000" placeholder="Link to the repository, article statement, or another source that supports this change." required></textarea></div>
+      <p class="submission-note">Opens a public GitHub draft. Review and submit there; maintainers review changes before acceptance.</p>
+      <button type="submit" id="correctionSubmit" class="button">Review on GitHub <span aria-hidden="true">↗</span></button><p id="correctionStatus" role="status" aria-live="polite"></p>
+    </form>
+  </dialog>
+  <noscript><p class="noscript">Enable JavaScript to search papers. You can also <a href="./stats.html">view statistics</a> or <a href="https://github.com/RRinTransportation/OTSM/issues/new?template=correction.md">suggest a correction</a>.</p></noscript>
+</body>
+</html>

@@ -15,6 +15,8 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from scripts.analysis_cohort import validate_cohort_membership
+
 
 ROOT = Path(__file__).resolve().parent
 DATA_PATH = ROOT / "data" / "fla_cleaned.csv"
@@ -141,6 +143,7 @@ def analysis_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
             f"Expected {EXPECTED_ANALYSIS_N:,} paper-analysis rows after filtering, "
             f"but found {len(filtered):,}."
         )
+    validate_cohort_membership((row.get("doi", "") for row in filtered), ROOT)
     return filtered
 
 

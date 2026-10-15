@@ -1,0 +1,39 @@
+name: Prepare reviewed correction
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: correction-intake-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.repository == 'RRinTransportation/OTSM' && github.event.label.name == 'correction-approved'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+    steps:
+      - name: Check out trusted default-branch scripts
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Verify correction parser and existing ledger
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_corrections.py'
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          node --test tests/explorer-behavior.test.cjs
+          python3 scripts/corrections.py validate
+          python3 scripts/build_explorer.py --check
+      - name: Create a correction record pull request
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/corrections.py publish --event "$GITHUB_EVENT_PATH"
+

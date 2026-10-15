@@ -1,10 +1,23 @@
-import pandas as pd, ast, json, numpy as np, os, re
+import ast
+from html import escape
+import json
 from pathlib import Path
-import matplotlib
-import matplotlib.pyplot as plt
+import re
 
-csv_path = "data/dashboard.csv"
+import pandas as pd
+
+from scripts.analysis_cohort import load_cohort, normalize_doi, validate_cohort_membership
+
+ROOT = Path(__file__).resolve().parent
+csv_path = ROOT / "data/dashboard.csv"
 df = pd.read_csv(csv_path)
+
+# The committed analysis DOI set is also available in minimal GitHub builds.
+# Restrict before metadata IO so an upstream refresh cannot add excluded papers.
+cohort = load_cohort(ROOT)
+normalized_dois = df['doi'].map(normalize_doi)
+df = df.loc[normalized_dois.isin(cohort)].copy()
+validate_cohort_membership(df['doi'], ROOT)
 
 # Ensure booleans
 df['is_code_publicly_available'] = df['is_code_publicly_available'].astype(bool)
@@ -49,7 +62,7 @@ def load_meta(doi):
     try:
         # Replace / with _ for filename
         filename = doi.replace('/', '_') + '.json'
-        path = Path('meta') / filename
+        path = ROOT / 'meta' / filename
         if path.exists():
             with open(path, 'r', encoding='utf-8') as f:
                 return json.load(f)
@@ -80,17 +93,6 @@ df['meta_open_access'] = df['doi'].apply(lambda x: get_meta_field(x, 'open_acces
 topic_col = 'lda_topic'
 topics = sorted(df[topic_col].fillna("Unknown").unique().tolist())
 
-# Color palette (modern colormaps API; sample N distinct colors)
-n_colors = max(len(topics), 1)
-cmap = matplotlib.colormaps.get_cmap('tab20')
-def rgba_from_cmap(i, a=1.0):
-  # distribute topic indices evenly across [0, 1]
-  t = 0.0 if n_colors == 1 else i / (n_colors - 1)
-  r, g, b, _ = cmap(t)
-  return f"rgba({int(r*255)},{int(g*255)},{int(b*255)},{a})"
-
-topic_color = {t: rgba_from_cmap(i, 1.0) for i,t in enumerate(topics)}
-
 def safe_str(x):
     return "" if pd.isna(x) else str(x)
 
@@ -98,7 +100,7 @@ def safe_str(x):
 traces = []
 
 # Helper to build traces for a specific view
-def add_view_traces(view_name, flag_col, link_col, link_disp_idx):
+def add_view_traces(view_name, flag_col):
     for t in topics:
         sub = df[df[topic_col].fillna("Unknown") == t]
         for flag in [True, False]:
@@ -108,20 +110,11 @@ def add_view_traces(view_name, flag_col, link_col, link_disp_idx):
             
             x = g['tsne_x'].astype(float).tolist()
             y = g['tsne_y'].astype(float).tolist()
-            doi = g['doi'].apply(safe_str).tolist()
             doi_url = g['doi_url'].apply(safe_str).tolist()
             year = g['year'].apply(safe_str).tolist()
             journal = g['journal'].apply(safe_str).tolist()
             
-            # Metadata fields
-            def short_title(title):
-              if pd.isna(title):
-                return ""
-              words = str(title).split()
-              if len(words) > 10:
-                return " ".join(words[:10]) + "..."
-              return str(title)
-            meta_title = g['meta_title'].apply(short_title).tolist()
+            # Full metadata is kept once per DOI in the published database.
             meta_full_title = g['meta_title'].tolist()
             meta_abstract = g['meta_abstract'].tolist()
             meta_inst = g['meta_inst'].tolist()
@@ -138,7 +131,7 @@ def add_view_traces(view_name, flag_col, link_col, link_disp_idx):
                 if not links:
                     code_disp_list.append("No link found")
                 else:
-                    anchors = [f"<a href='{u}' target='_blank' rel='noopener noreferrer'>{u}</a>" for u in links[:3]]
+                    anchors = [f"<a href='{escape(u, quote=True)}' target='_blank' rel='noopener noreferrer'>{escape(u)}</a>" for u in links]
                     code_disp_list.append("<br>".join(anchors))
             
             data_disp_list = []
@@ -146,825 +139,27 @@ def add_view_traces(view_name, flag_col, link_col, link_disp_idx):
                 if not links:
                     data_disp_list.append("No link found")
                 else:
-                    anchors = [f"<a href='{u}' target='_blank' rel='noopener noreferrer'>{u}</a>" for u in links[:3]]
+                    anchors = [f"<a href='{escape(u, quote=True)}' target='_blank' rel='noopener noreferrer'>{escape(u)}</a>" for u in links]
                     data_disp_list.append("<br>".join(anchors))
 
-            color = topic_color[t]
-            
-            # Determine marker style based on the CURRENT view's flag
-            if flag:
-                # Available (Star)
-                marker = {
-                    "symbol": "star",
-                    "size": 10,
-                    "color": color.replace("rgba(", "rgba(").replace(",1.0)", ",0.85)"),
-                    "line": {"color": color.replace(",1.0)", ",1)"), "width": 0.8},
-                }
-                name = t
-                showlegend = True
-            else:
-                # Not Available (Circle)
-                m = re.match(r"rgba\((\d+),(\d+),(\d+),", color)
-                if m:
-                    r, g_, b = m.group(1), m.group(2), m.group(3)
-                    line_color = f"rgba({r},{g_},{b},0.5)"
-                else:
-                    line_color = "rgba(0,0,0,0.8)"
-                marker = {
-                    "symbol": "circle",
-                    "size": 6,
-                    "color": "rgba(0,0,0,0)",
-                    "line": {"color": line_color, "width": 1},
-                }
-                name = t + f" (no {view_name})"
-                showlegend = False
-
-            # Hover template
-            hovertemplate = (
-                "<b>%{text}</b><br>"
-                f"Topic: {t}<br>"
-                "Year: %{customdata[1]}<br>"
-                "Journal: %{customdata[2]}<br>"
-                "<b>Code</b>: %{customdata[3]}<br>"
-                "<b>Data</b>: %{customdata[4]}"
-                "<extra></extra>"
-            )
-
             trace = {
-                "type": "scattergl",
-                "mode": "markers",
-                "name": name,
-                "showlegend": showlegend,
                 "x": x,
                 "y": y,
-                "text": meta_title,
-                # customdata: [doi_url, year, journal, code_disp, data_disp, title, abstract, inst, keywords, funding, open_access]
+                # [doi_url, year, journal, code, data, title, abstract, institution,
+                #  keywords, funding, open_access]
                 "customdata": list(map(list, zip(doi_url, year, journal, code_disp_list, data_disp_list, meta_full_title, meta_abstract, meta_inst, meta_keywords, meta_funding, meta_open_access))),
-                "hovertemplate": hovertemplate,
-                "hoverlabel": {"bgcolor": "#f3f4f6", "bordercolor": "#d1d5db", "font": {"color": "#111827"}} if flag else {},
-                "marker": marker,
                 "meta": {"topic": t, "view": view_name, "flag": flag},
-                # Initially, only show 'code' view
-                "visible": (view_name == "code")
             }
             traces.append(trace)
 
 # Generate traces for Code View
-add_view_traces("code", "is_code_publicly_available", "code_links", 3)
+add_view_traces("code", "is_code_publicly_available")
 # Generate traces for Data View
-add_view_traces("data", "is_data_repository_available", "data_links", 4)
+add_view_traces("data", "is_data_repository_available")
 
-topic_options = ["All"] + topics
-code_options = ["All", "Code available", "No code"]
-data_options = ["All", "Data available", "No data"]
+# Publish one canonical record per DOI. Presentation lives in the reusable template.
+# The lightweight builder can also rebuild the site directly from checked-in JSON.
+from scripts.build_explorer import publish_traces
 
-html = f"""<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Open Science Explorer for Transportation Research</title>
-  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
-  <style>
-    :root {{
-      --bg: #ffffff;
-      --card: #f9fafb;
-      --muted: #6b7280;
-      --text: #111827;
-      --border: rgba(15,23,42,0.08);
-      --shadow: rgba(15,23,42,0.15);
-      --radius: 14px;
-    }}
-    html, body {{
-      height: 100%;
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: "Palatino Linotype", "Book Antiqua", Palatino, "Times New Roman", serif;
-    }}
-    .wrap {{
-      max-width: 1400px;
-      margin: 28px auto;
-      padding: 0 16px;
-      display: flex;
-      gap: 24px;
-      align-items: flex-start;
-    }}
-    .sidebar {{
-      flex: 0 0 300px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      position: sticky;
-      top: 28px;
-      height: calc(100vh - 56px);
-      overflow-y: auto;
-    }}
-    .sidebar-header {{
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }}
-    .main-content {{
-      flex: 1;
-      min-width: 0; /* Prevent flex item from overflowing */
-      height: calc(100vh - 56px);
-      display: flex;
-      flex-direction: column;
-    }}
-    h1 {{
-      font-size: 22px;
-      margin: 0;
-      letter-spacing: -0.01em;
-      line-height: 1.3;
-      font-weight: 600;
-    }}
-    .sub {{
-      font-size: 14px;
-      color: var(--muted);
-      margin-top: 8px;
-      line-height: 1.5;
-    }}
-    .controls {{
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }}
-    .control {{
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-      width: 100%;
-      box-sizing: border-box;
-      transition: box-shadow 0.2s;
-    }}
-    .control:hover {{
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }}
-    label {{
-      font-size: 13px;
-      color: var(--text);
-      font-weight: 600;
-    }}
-    select {{
-      background: #f9fafb;
-      color: var(--text);
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      outline: none;
-      font-size: 14px;
-      padding: 8px 10px;
-      cursor: pointer;
-      width: 100%;
-      transition: border-color 0.2s;
-    }}
-    select:hover {{
-      border-color: #d1d5db;
-    }}
-    select:focus {{
-      border-color: #2563eb;
-      ring: 2px solid rgba(37,99,235,0.1);
-    }}
-    input[type="text"] {{
-      background: #f9fafb;
-      color: var(--text);
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      outline: none;
-      font-size: 14px;
-      padding: 8px 10px;
-      width: 100%;
-      box-sizing: border-box;
-      transition: border-color 0.2s;
-    }}
-    input[type="text"]:hover {{
-      border-color: #d1d5db;
-    }}
-    input[type="text"]:focus {{
-      border-color: #2563eb;
-      ring: 2px solid rgba(37,99,235,0.1);
-    }}
-    .card {{
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      overflow: hidden;
-      position: relative;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }}
-    #plot {{
-      flex: 1;
-      width: 100%;
-      height: 100%;
-      min-height: 0; /* Allow shrinking */
-    }}
-    .footer {{
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 10px;
-    }}
-    .kbd {{
-      font-family: "Palatino Linotype", "Book Antiqua", Palatino, "Times New Roman", serif;
-      padding: 2px 6px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: rgba(255,255,255,0.03);
-      color: var(--text);
-    }}
-    /* Modal styles */
-    .modal {{
-      display: none; 
-      position: fixed; 
-      z-index: 1000; 
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: auto;
-    }}
-    .modal-content {{
-      background-color: #fefefe;
-      padding: 20px;
-      border: 1px solid #e5e7eb;
-      border-radius: var(--radius);
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-      font-family: "Palatino Linotype", "Book Antiqua", Palatino, "Times New Roman", serif;
-      pointer-events: auto; /* Re-enable clicks on content */
-      max-height: 80vh;
-      overflow-y: auto;
-      width: 90%;
-      max-width: 500px;
-    }}
-    .close {{
-      color: #aaa;
-      float: right;
-      font-size: 24px;
-      font-weight: bold;
-      cursor: pointer;
-      line-height: 1;
-      margin-left: 10px;
-    }}
-    .close:hover,
-    .close:focus {{
-      color: #000;
-      text-decoration: none;
-      cursor: pointer;
-    }}
-    .modal-header {{
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid #e5e7eb;
-    }}
-    .modal-body {{
-        margin-bottom: 1.5rem;
-        line-height: 1.6;
-    }}
-    .modal-body p {{
-        margin: 0.5rem 0;
-    }}
-    .modal-footer {{
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-    }}
-    .btn {{
-        display: inline-flex;
-        align-items: center;
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        border-radius: 0.375rem;
-        text-decoration: none;
-        color: white;
-        background-color: #2563eb;
-        transition: background-color 0.2s;
-    }}
-    .btn:hover {{
-        background-color: #1d4ed8;
-    }}
-    .btn-toggle {{
-        flex: 1;
-        padding: 8px;
-        border: 1px solid #e5e7eb;
-        background: #f9fafb;
-        cursor: pointer;
-        border-radius: 6px;
-        font-weight: 600;
-        color: var(--muted);
-        transition: all 0.2s;
-    }}
-    .btn-toggle.active {{
-        background: #2563eb;
-        color: white;
-        border-color: #2563eb;
-    }}
-    /* Citation Styling */
-    .citation-card {{
-      background: #f9fafb;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      margin-top: 12px;
-      position: relative;
-      transition: all 0.2s;
-    }}
-    .citation-card:hover {{
-      border-color: #cbd5e1;
-      background: #f3f4f6;
-    }}
-    .citation-header {{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }}
-    .citation-label {{
-      font-weight: 600;
-      font-size: 12px;
-      color: var(--text);
-    }}
-    .copy-badge {{
-      cursor: pointer;
-      font-size: 10px;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      padding: 2px 6px;
-      border-radius: 4px;
-      color: var(--muted);
-      transition: all 0.2s;
-    }}
-    .copy-badge:hover {{
-      background: #2563eb;
-      color: #fff;
-      border-color: #2563eb;
-    }}
-    .citation-card pre {{
-      margin: 0;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 11px;
-      line-height: 1.5;
-      color: #475569;
-    }}
-    @media (max-width: 1024px) {{
-      .wrap {{
-        flex-direction: column;
-        align-items: stretch;
-        gap: 16px;
-        margin: 16px auto;
-        padding: 0 12px;
-      }}
-      .sidebar {{
-        display: contents;
-      }}
-      .sidebar-header {{
-        order: 1;
-        width: 100%;
-        flex-direction: row;
-        align-items: center;
-        gap: 16px;
-      }}
-      .sidebar-header img {{
-        height: 48px !important;
-        width: auto;
-        align-self: center !important;
-      }}
-      .sidebar-header h1 {{
-        font-size: 18px;
-        line-height: 1.2;
-      }}
-      .main-content {{
-        order: 2;
-        height: 50vh;
-        min-height: 350px;
-        width: 100%;
-      }}
-      .controls {{
-        order: 3;
-        width: 100%;
-        gap: 10px;
-      }}
-      .footer {{
-        order: 4;
-        width: 100%;
-      }}
-      /* Mobile text size fixes */
-      select, input[type="text"], .btn, .btn-toggle {{
-        font-size: 16px;
-      }}
-    }}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="sidebar">
-      <div class="sidebar-header">
-        <a href="https://rerite.org" target="_blank" rel="noopener noreferrer" style="display: inline-block; transition: opacity 0.2s;">
-            <img src="./images/logo_png.png" alt="Logo" style="height: 60px; width: auto; align-self: flex-start;">
-        </a>
-        <div>
-          <h1>Open Science Explorer for Transportation Research</h1>
-          <div class="sub">Click a dot to view details.</div>
-        </div>
-      </div>
-      <div class="controls">
-        <div class="control">
-            <label>View Mode</label>
-            <div style="display: flex; gap: 8px; width: 100%;">
-                <button id="btnCodeView" class="btn-toggle active">Code</button>
-                <button id="btnDataView" class="btn-toggle">Data</button>
-            </div>
-        </div>
-        <div class="control">
-          <label for="topicSelect">Topic</label>
-          <select id="topicSelect">
-            {''.join([f'<option value="{t}">{t}</option>' for t in topic_options])}
-          </select>
-        </div>
-        <div class="control" id="codeControl">
-          <label for="codeSelect">Code Availability</label>
-          <select id="codeSelect">
-            {''.join([f'<option value="{c}">{c}</option>' for c in code_options])}
-          </select>
-        </div>
-        <div class="control" id="dataControl" style="display: none;">
-          <label for="dataSelect">Data Availability</label>
-          <select id="dataSelect">
-            {''.join([f'<option value="{d}">{d}</option>' for d in data_options])}
-          </select>
-        </div>
-        <div class="control">
-          <label for="searchInput">Search abstract (beta)</label>
-          <input type="text" id="searchInput" placeholder="e.g., calibration" />
-        </div>
-        <div class="control">
-          <button id="btnRandomWalk" class="btn" style="width: 100%; justify-content: center; background-color: #059669; border: none; cursor: pointer;">🎲 Random Walk</button>
-          <div class="sub" style="margin-top: 4px; font-size: 12px;">Discover a random paper with open data or code.</div>
-        </div>
-      </div>
-      <div class="footer" style="flex-direction: column; margin-top: auto;">
-        <div>
-          <span class="kbd">How to use?</span>
-        </div>
-
-        <div class="help-popup" id="helpPopup" role="dialog">
-          <div class="help-content">
-            <p>
-              Hello! This is an interactive website for our LLM-based measurement of open science practices in transportation journals.
-              By searching keywords (under beta testing) you can get a sense of the papers on the topic (circles) and which have available code or data (stars).
-              Feedback is welcome! Contact
-              <a href="mailto:junyi.ji@vanderbilt.edu"
-                onclick="navigator.clipboard.writeText('junyi.ji@vanderbilt.edu')">
-                junyi.ji@vanderbilt.edu
-              </a>.
-            </p>
-          </div>
-        </div>
-
-        <div class="citation-card">
-          <div class="citation-header">
-            <span class="citation-label">Cite this work</span>
-            <span class="copy-badge" id="copyBibBtn">Copy BibTeX</span>
-          </div>
-          <pre id="bibtexText">@article{{rerite2026most,
-  title={{Measuring the State of Open Science in Transportation Using Large Language Models}}, 
-  author={{Junyi Ji and Ruth Lu and Linda Belkessa and Liming Wang and Silvia Varotto and Yongqi Dong and Nicolas Saunier and Mostafa Ameli and Gregory S. Macfarlane and Bahman Madadi and Cathy Wu}},
-  year={{2026}},
-  eprint={{2601.14429}},
-  journal={{arXiv preprint arXiv:2601.14429}},
-  archivePrefix={{arXiv}},
-  primaryClass={{cs.DL}},
-  url={{https://arxiv.org/abs/2601.14429}}}}</pre>
-        </div>
-      </div>
-    </div>
-
-    <div class="main-content">
-      <div class="card">
-        <div id="plot"></div>
-        <!-- Modal -->
-        <div id="infoModal" class="modal">
-          <div class="modal-content">
-            <span class="close">&times;</span>
-            <div class="modal-header">
-                <h2 id="modalTitle" style="margin:0; font-size: 1.25rem;">🔬 Discovering Open Science...</h2>
-            </div>
-            <div id="modalBody" class="modal-body">
-            </div>
-            <div id="modalFooter" class="modal-footer">
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const traces = {json.dumps(traces)};
-    const layout = {{
-      margin: {{l: 50, r: 22, t: 18, b: 45}},
-      paper_bgcolor: "#ffffff",
-      plot_bgcolor: "#ffffff",
-      hovermode: "closest",
-      dragmode: "pan",
-      font: {{
-        family: "'Palatino Linotype', 'Book Antiqua', Palatino, 'Times New Roman', serif",
-        color: "rgba(15,23,42,0.85)"
-      }},
-      xaxis: {{
-        title: {{
-          text: "x (t-SNE)",
-          font: {{family: "'Palatino Linotype', 'Book Antiqua', Palatino, 'Times New Roman', serif"}}
-        }},
-        zeroline: false,
-        gridcolor: "rgba(0,0,0,0.06)",
-        color: "rgba(15,23,42,0.85)"
-      }},
-      yaxis: {{
-        title: {{
-          text: "y (t-SNE)",
-          font: {{family: "'Palatino Linotype', 'Book Antiqua', Palatino, 'Times New Roman', serif"}}
-        }},
-        zeroline: false,
-        gridcolor: "rgba(0,0,0,0.06)",
-        color: "rgba(15,23,42,0.85)"
-      }},
-      legend: {{
-        orientation: "h",
-        y: 1.02,
-        x: 0,
-        font: {{
-          size: 11,
-          color: "rgba(15,23,42,0.85)",
-          family: "'Palatino Linotype', 'Book Antiqua', Palatino, 'Times New Roman', serif"
-        }},
-        bgcolor: "rgba(0,0,0,0)"
-      }}
-    }};
-
-    const config = {{
-      responsive: true,
-      displaylogo: false,
-      scrollZoom: true
-    }};
-
-    // Mobile adjustments for dense dots
-    if (window.innerWidth < 768) {{
-      traces.forEach(t => {{
-        if (t.marker && t.marker.size) {{
-          // Reduce marker size on mobile to reduce visual density
-          // Star (10) -> ~6, Circle (6) -> ~3.5
-          t.marker.size = t.marker.size * 0.6;
-        }}
-      }});
-      // Tighter margins on mobile
-      if (layout.margin) {{
-          layout.margin.l = 10;
-          layout.margin.r = 10;
-          layout.margin.t = 10;
-          layout.margin.b = 30;
-      }}
-    }}
-
-    // View state
-    let currentView = "code"; // 'code' or 'data'
-
-    // Modal logic
-    const modal = document.getElementById("infoModal");
-    const span = document.getElementsByClassName("close")[0];
-    
-    // Hide modal initially
-    modal.style.display = "none";
-
-    span.onclick = function() {{
-      modal.style.display = "none";
-    }}
-    
-    window.onclick = function(event) {{
-      if (event.target == modal) {{
-        modal.style.display = "none";
-      }}
-    }}
-
-    function showDetails(pt) {{
-        const cd = pt.customdata;
-        // customdata: [doi_url, year, journal, code_disp, data_disp, title, abstract, inst, keywords]
-        const doiUrl = cd && cd[0] ? cd[0] : "#";
-        const year = cd && cd[1] ? cd[1] : "N/A";
-        const journal = cd && cd[2] ? cd[2] : "N/A";
-        const codeDisp = cd && cd[3] ? cd[3] : "No code link";
-        const dataDisp = cd && cd[4] ? cd[4] : "No data link";
-        const metaTitle = cd && cd[5] ? cd[5] : (pt.text || "No Title");
-        const metaAbstract = cd && cd[6] ? cd[6] : "No abstract available.";
-        const metaInst = cd && cd[7] ? cd[7] : "Unknown Institution";
-        const metaKeywords = cd && cd[8] ? cd[8] : "";
-        const metaFunding = cd && cd[9] ? cd[9] : "";
-        const metaOpenAccess = cd && cd[10] ? cd[10] : "False";
-        
-        const topic = (pt.data && pt.data.meta) ? pt.data.meta.topic : (pt.topic || "Unknown");
-
-        const modalTitle = document.getElementById("modalTitle");
-        const modalBody = document.getElementById("modalBody");
-        const modalFooter = document.getElementById("modalFooter");
-
-        modalTitle.innerText = metaTitle;
-        
-        let content = `<p><strong>Topic:</strong> ${{topic}}</p>`;
-        content += `<p><strong>Year:</strong> ${{year}}</p>`;
-        content += `<p><strong>Journal:</strong> ${{journal}}</p>`;
-        content += `<p><strong>Institution:</strong> ${{metaInst}}</p>`;
-        content += `<p><strong>Open Access:</strong> ${{metaOpenAccess}}</p>`;
-        if (metaKeywords) {{
-            content += `<p><strong>Keywords:</strong> ${{metaKeywords}}</p>`;
-        }}
-        if (metaOpenAccess === "True" && metaFunding) {{
-            content += `<p><strong>Funding:</strong> ${{metaFunding}}</p>`;
-        }}
-        content += `<hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 1rem 0;">`;
-        content += `<p><strong>Abstract:</strong></p><p style="font-size: 0.95em; color: #374151;">${{metaAbstract}}</p>`;
-        content += `<hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 1rem 0;">`;
-        content += `<p><strong>Code:</strong> ${{codeDisp}}</p>`;
-        content += `<p><strong>Data:</strong> ${{dataDisp}}</p>`;
-        
-        modalBody.innerHTML = content;
-
-        let footerContent = "";
-        if (doiUrl && doiUrl !== "#") {{
-            footerContent += `<a href="${{doiUrl}}" target="_blank" class="btn">Open Paper</a>`;
-        }}
-        
-        modalFooter.innerHTML = footerContent;
-
-        modal.style.display = "flex";
-    }}
-
-    Plotly.newPlot("plot", traces, layout, config).then(gd => {{
-      gd.on("plotly_click", (ev) => {{
-        if (!ev || !ev.points || !ev.points.length) return;
-        showDetails(ev.points[0]);
-      }});
-    }});
-
-    function randomWalk() {{
-      const candidates = [];
-      traces.forEach(tr => {{
-        if (tr.meta && tr.meta.flag === true) {{
-          for (let i = 0; i < tr.x.length; i++) {{
-            candidates.push({{
-              customdata: tr.customdata[i],
-              text: tr.text[i],
-              topic: tr.meta.topic,
-              data: tr
-            }});
-          }}
-        }}
-      }});
-
-      if (candidates.length > 0) {{
-        const randomPt = candidates[Math.floor(Math.random() * candidates.length)];
-        showDetails(randomPt);
-      }}
-    }}
-
-    function updateVisibility() {{
-      const topic = document.getElementById("topicSelect").value;
-      const code = document.getElementById("codeSelect").value;
-      const data = document.getElementById("dataSelect").value;
-      const searchInput = document.getElementById("searchInput");
-      const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : "";
-
-      const vis = [];
-      const markerOpacities = [];
-
-      function matchesSearch(text, term) {{
-        if (!term) return true;
-        const lowerText = (text || "").toLowerCase();
-        const words = term.split(/\s+/).filter(Boolean);
-        if (!words.length) return true;
-        // simple fuzzy-ish search: all words must appear (case-insensitive, partial match)
-        return words.every(w => lowerText.includes(w));
-      }}
-
-      traces.forEach(tr => {{
-        // 1. Check View
-        let visible = (tr.meta.view === currentView);
-
-        // 2. Check Topic
-        if (visible) {{
-          const okTopic = (topic === "All") || (tr.meta.topic === topic);
-          if (!okTopic) visible = false;
-        }}
-
-        // 3. Check Filter based on View
-        if (visible) {{
-          if (currentView === "code") {{
-              if (code === "All") {{
-                  // keep visible
-              }} else if (code === "Code available" && tr.meta.flag === true) {{
-                  // keep visible
-              }} else if (code === "No code" && tr.meta.flag === false) {{
-                  // keep visible
-              }} else {{
-                  visible = false;
-              }}
-          }} else {{
-              if (data === "All") {{
-                  // keep visible
-              }} else if (data === "Data available" && tr.meta.flag === true) {{
-                  // keep visible
-              }} else if (data === "No data" && tr.meta.flag === false) {{
-                  // keep visible
-              }} else {{
-                  visible = false;
-              }}
-          }}
-        }}
-
-        vis.push(visible);
-
-        // 4. Per-point opacity based on abstract search
-        if (!visible) {{
-          markerOpacities.push(1);
-          return;
-        }}
-
-        if (!searchTerm) {{
-          // no search term: show all points fully
-          markerOpacities.push(1);
-        }} else {{
-          const cd = tr.customdata || [];
-          const opacities = cd.map(row => {{
-            const abstract = row && row.length > 6 ? row[6] : "";
-            return matchesSearch(abstract, searchTerm) ? 1 : 0.05;
-          }});
-          markerOpacities.push(opacities);
-        }}
-      }});
-
-      Plotly.restyle("plot", "visible", vis);
-      Plotly.restyle("plot", {{"marker.opacity": markerOpacities}});
-    }}
-
-    function setView(view) {{
-        currentView = view;
-        
-        // Update UI buttons
-        document.getElementById("btnCodeView").classList.toggle("active", view === "code");
-        document.getElementById("btnDataView").classList.toggle("active", view === "data");
-        
-        // Show/Hide controls
-        document.getElementById("codeControl").style.display = (view === "code") ? "flex" : "none";
-        document.getElementById("dataControl").style.display = (view === "data") ? "flex" : "none";
-
-        updateVisibility();
-    }}
-
-    document.getElementById("btnCodeView").addEventListener("click", () => setView("code"));
-    document.getElementById("btnDataView").addEventListener("click", () => setView("data"));
-    document.getElementById("btnRandomWalk").addEventListener("click", randomWalk);
-
-    document.getElementById("topicSelect").addEventListener("change", updateVisibility);
-    document.getElementById("codeSelect").addEventListener("change", updateVisibility);
-    document.getElementById("dataSelect").addEventListener("change", updateVisibility);
-    document.getElementById("searchInput").addEventListener("input", updateVisibility);
-
-    // Copy BibTeX Functionality
-    document.getElementById("copyBibBtn").addEventListener("click", function() {{
-      const bibtex = document.getElementById("bibtexText").innerText;
-      navigator.clipboard.writeText(bibtex).then(() => {{
-        const originalText = this.innerText;
-        this.innerText = "Copied!";
-        this.style.background = "#059669";
-        this.style.color = "white";
-        setTimeout(() => {{
-          this.innerText = originalText;
-          this.style.background = "";
-          this.style.color = "";
-        }}, 2000);
-      }});
-    }});
-  </script>
-</body>
-</html>
-"""
-
-out_path = "explorer.html"
-Path(out_path).write_text(html, encoding="utf-8")
-out_path
+summary = publish_traces(traces, Path(__file__).resolve().parent)
+print(f"Built explorer with {summary['papers']:,} unique papers")
