@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   prepare:
-    if: github.repository == 'RRinTransportation/OTSM' && github.event.label.name == 'correction-approved'
+    if: github.repository == 'RRinTransportation/MOST' && github.event.label.name == 'correction-approved'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

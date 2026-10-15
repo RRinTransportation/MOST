@@ -146,7 +146,7 @@ test("editor correction queues target open issues and follow the selected journa
   const all = new URL(issueQueueUrl("All"));
   const journal = new URL(issueQueueUrl("Transportation Research Part A: Policy and Practice"));
   assert.equal(journal.origin, "https://github.com");
-  assert.equal(journal.pathname, "/RRinTransportation/OTSM/issues");
+  assert.equal(journal.pathname, "/RRinTransportation/MOST/issues");
   assert.equal(all.searchParams.get("q"), 'is:issue is:open "[Correction]"');
   assert.equal(journal.searchParams.get("q"), 'is:issue is:open "[Correction]" "Transportation Research Part A: Policy and Practice"');
   assert.ok(!all.searchParams.get("q").includes("All"));

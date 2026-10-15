@@ -22,7 +22,7 @@ from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import Request, urlopen
 
 
-REPOSITORY = "RRinTransportation/OTSM"
+REPOSITORY = "RRinTransportation/MOST"
 APPROVAL_LABEL = "correction-approved"
 FIELDS = {
     "code_availability", "data_availability", "code_links", "data_links",

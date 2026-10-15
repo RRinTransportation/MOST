@@ -50,7 +50,7 @@ These files only become active after they are committed to the repository's
 default branch. This local implementation does not change repository settings,
 publish a site, or submit any external issues or pull requests.
 
-1. Enable **Issues** and **Actions** in `RRinTransportation/OTSM` if needed.
+1. Enable **Issues** and **Actions** in `RRinTransportation/MOST` if needed.
 2. Create the issue label `correction-approved`. Its exact spelling matters.
 3. Under **Settings → Actions → General → Workflow permissions**, enable
    **Allow GitHub Actions to create and approve pull requests** if organizational

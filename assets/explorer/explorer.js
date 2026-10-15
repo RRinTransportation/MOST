@@ -4,7 +4,7 @@
 
   const PAGE_SIZE = 10;
   const MAP_PAGE_SIZE = 10;
-  const ISSUE_BASE = "https://github.com/RRinTransportation/OTSM/issues/new";
+  const ISSUE_BASE = "https://github.com/RRinTransportation/MOST/issues/new";
   const PLOTLY_URL = "https://cdn.plot.ly/plotly-2.30.0.min.js";
   const CORRECTION_FIELDS = new Set(["code_availability", "data_availability", "code_links", "data_links", "title", "abstract", "topic", "other"]);
   const COLORS = ["#326b89", "#b56735", "#557b51", "#8361a0", "#a44c66", "#638343", "#487d80", "#926c35", "#5a6bb0", "#a75343", "#706b97", "#698452", "#9a648b", "#597b93", "#8c7454"];
@@ -147,7 +147,7 @@
   }
 
   function issueQueueUrl(journal) {
-    const url = new URL("https://github.com/RRinTransportation/OTSM/issues");
+    const url = new URL("https://github.com/RRinTransportation/MOST/issues");
     const journalQuery = journal && journal !== "All" ? " \"" + String(journal).replace(/["\\]/g, " ").trim() + "\"" : "";
     url.searchParams.set("q", "is:issue is:open \"[Correction]\"" + journalQuery);
     return url.href;
