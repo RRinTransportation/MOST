@@ -2,6 +2,22 @@
 
 Webpage for Measuring Open Science in Transportation Research.
 
+## License
+
+The original MOST source code and associated software documentation are
+licensed under the [MIT License](LICENSE). You may use, modify, and redistribute
+them, including commercially, provided you retain the copyright and license
+notice.
+
+This license does not cover research datasets, article metadata or abstracts
+(including those embedded in generated pages and JSON files), or third-party code and assets.
+Those materials retain their respective rights and any existing license terms;
+their inclusion in this repository does not grant additional reuse rights.
+
+If you use MOST in research, please cite the
+[project paper](https://doi.org/10.1016/j.trc.2026.106024). This citation request
+is separate from the MIT License conditions.
+
 ## GitHub Pages hosting
 
 The canonical site is:
